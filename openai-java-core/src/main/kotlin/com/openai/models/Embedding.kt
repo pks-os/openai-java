@@ -6,29 +6,31 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 
 /** Represents an embedding vector returned by embedding endpoint. */
-@JsonDeserialize(builder = Embedding.Builder::class)
 @NoAutoDetect
 class Embedding
+@JsonCreator
 private constructor(
-    private val index: JsonField<Long>,
-    private val embedding: JsonField<List<Double>>,
-    private val object_: JsonField<Object>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("index") @ExcludeMissing private val index: JsonField<Long> = JsonMissing.of(),
+    @JsonProperty("embedding")
+    @ExcludeMissing
+    private val embedding: JsonField<List<Double>> = JsonMissing.of(),
+    @JsonProperty("object")
+    @ExcludeMissing
+    private val object_: JsonField<Object> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /** The index of the embedding in the list of embeddings. */
     fun index(): Long = index.getRequired("index")
@@ -58,6 +60,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): Embedding = apply {
         if (!validated) {
             index()
@@ -83,18 +87,16 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(embedding: Embedding) = apply {
-            this.index = embedding.index
+            index = embedding.index
             this.embedding = embedding.embedding
-            this.object_ = embedding.object_
-            additionalProperties(embedding.additionalProperties)
+            object_ = embedding.object_
+            additionalProperties = embedding.additionalProperties.toMutableMap()
         }
 
         /** The index of the embedding in the list of embeddings. */
         fun index(index: Long) = index(JsonField.of(index))
 
         /** The index of the embedding in the list of embeddings. */
-        @JsonProperty("index")
-        @ExcludeMissing
         fun index(index: JsonField<Long>) = apply { this.index = index }
 
         /**
@@ -109,30 +111,31 @@ private constructor(
          * model as listed in the
          * [embedding guide](https://platform.openai.com/docs/guides/embeddings).
          */
-        @JsonProperty("embedding")
-        @ExcludeMissing
         fun embedding(embedding: JsonField<List<Double>>) = apply { this.embedding = embedding }
 
         /** The object type, which is always "embedding". */
         fun object_(object_: Object) = object_(JsonField.of(object_))
 
         /** The object type, which is always "embedding". */
-        @JsonProperty("object")
-        @ExcludeMissing
         fun object_(object_: JsonField<Object>) = apply { this.object_ = object_ }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): Embedding =

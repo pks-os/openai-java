@@ -4,26 +4,29 @@ package com.openai.models
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import java.util.Objects
 
-@JsonDeserialize(builder = ImagesResponse.Builder::class)
 @NoAutoDetect
 class ImagesResponse
+@JsonCreator
 private constructor(
-    private val created: JsonField<Long>,
-    private val data: JsonField<List<Image>>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("created")
+    @ExcludeMissing
+    private val created: JsonField<Long> = JsonMissing.of(),
+    @JsonProperty("data")
+    @ExcludeMissing
+    private val data: JsonField<List<Image>> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     fun created(): Long = created.getRequired("created")
 
@@ -36,6 +39,8 @@ private constructor(
     @JsonAnyGetter
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+    private var validated: Boolean = false
 
     fun validate(): ImagesResponse = apply {
         if (!validated) {
@@ -60,35 +65,36 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(imagesResponse: ImagesResponse) = apply {
-            this.created = imagesResponse.created
-            this.data = imagesResponse.data
-            additionalProperties(imagesResponse.additionalProperties)
+            created = imagesResponse.created
+            data = imagesResponse.data
+            additionalProperties = imagesResponse.additionalProperties.toMutableMap()
         }
 
         fun created(created: Long) = created(JsonField.of(created))
 
-        @JsonProperty("created")
-        @ExcludeMissing
         fun created(created: JsonField<Long>) = apply { this.created = created }
 
         fun data(data: List<Image>) = data(JsonField.of(data))
 
-        @JsonProperty("data")
-        @ExcludeMissing
         fun data(data: JsonField<List<Image>>) = apply { this.data = data }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ImagesResponse =

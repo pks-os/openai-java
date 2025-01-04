@@ -6,30 +6,34 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 
 /** Describes an OpenAI model offering that can be used with the API. */
-@JsonDeserialize(builder = Model.Builder::class)
 @NoAutoDetect
 class Model
+@JsonCreator
 private constructor(
-    private val id: JsonField<String>,
-    private val created: JsonField<Long>,
-    private val object_: JsonField<Object>,
-    private val ownedBy: JsonField<String>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("id") @ExcludeMissing private val id: JsonField<String> = JsonMissing.of(),
+    @JsonProperty("created")
+    @ExcludeMissing
+    private val created: JsonField<Long> = JsonMissing.of(),
+    @JsonProperty("object")
+    @ExcludeMissing
+    private val object_: JsonField<Object> = JsonMissing.of(),
+    @JsonProperty("owned_by")
+    @ExcludeMissing
+    private val ownedBy: JsonField<String> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /** The model identifier, which can be referenced in the API endpoints. */
     fun id(): String = id.getRequired("id")
@@ -59,6 +63,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): Model = apply {
         if (!validated) {
             id()
@@ -86,55 +92,54 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(model: Model) = apply {
-            this.id = model.id
-            this.created = model.created
-            this.object_ = model.object_
-            this.ownedBy = model.ownedBy
-            additionalProperties(model.additionalProperties)
+            id = model.id
+            created = model.created
+            object_ = model.object_
+            ownedBy = model.ownedBy
+            additionalProperties = model.additionalProperties.toMutableMap()
         }
 
         /** The model identifier, which can be referenced in the API endpoints. */
         fun id(id: String) = id(JsonField.of(id))
 
         /** The model identifier, which can be referenced in the API endpoints. */
-        @JsonProperty("id") @ExcludeMissing fun id(id: JsonField<String>) = apply { this.id = id }
+        fun id(id: JsonField<String>) = apply { this.id = id }
 
         /** The Unix timestamp (in seconds) when the model was created. */
         fun created(created: Long) = created(JsonField.of(created))
 
         /** The Unix timestamp (in seconds) when the model was created. */
-        @JsonProperty("created")
-        @ExcludeMissing
         fun created(created: JsonField<Long>) = apply { this.created = created }
 
         /** The object type, which is always "model". */
         fun object_(object_: Object) = object_(JsonField.of(object_))
 
         /** The object type, which is always "model". */
-        @JsonProperty("object")
-        @ExcludeMissing
         fun object_(object_: JsonField<Object>) = apply { this.object_ = object_ }
 
         /** The organization that owns the model. */
         fun ownedBy(ownedBy: String) = ownedBy(JsonField.of(ownedBy))
 
         /** The organization that owns the model. */
-        @JsonProperty("owned_by")
-        @ExcludeMissing
         fun ownedBy(ownedBy: JsonField<String>) = apply { this.ownedBy = ownedBy }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): Model =

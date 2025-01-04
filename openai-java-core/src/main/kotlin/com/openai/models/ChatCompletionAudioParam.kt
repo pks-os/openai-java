@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
@@ -21,16 +21,16 @@ import java.util.Objects
  * Parameters for audio output. Required when audio output is requested with `modalities:
  * ["audio"]`. [Learn more](https://platform.openai.com/docs/guides/audio).
  */
-@JsonDeserialize(builder = ChatCompletionAudioParam.Builder::class)
 @NoAutoDetect
 class ChatCompletionAudioParam
+@JsonCreator
 private constructor(
-    private val voice: JsonField<Voice>,
-    private val format: JsonField<Format>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("voice") @ExcludeMissing private val voice: JsonField<Voice> = JsonMissing.of(),
+    @JsonProperty("format")
+    @ExcludeMissing
+    private val format: JsonField<Format> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /**
      * The voice the model uses to respond. Supported voices are `ash`, `ballad`, `coral`, `sage`,
@@ -60,6 +60,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): ChatCompletionAudioParam = apply {
         if (!validated) {
             voice()
@@ -83,9 +85,9 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(chatCompletionAudioParam: ChatCompletionAudioParam) = apply {
-            this.voice = chatCompletionAudioParam.voice
-            this.format = chatCompletionAudioParam.format
-            additionalProperties(chatCompletionAudioParam.additionalProperties)
+            voice = chatCompletionAudioParam.voice
+            format = chatCompletionAudioParam.format
+            additionalProperties = chatCompletionAudioParam.additionalProperties.toMutableMap()
         }
 
         /**
@@ -100,8 +102,6 @@ private constructor(
          * `sage`, and `verse` (also supported but not recommended are `alloy`, `echo`, and
          * `shimmer`; these voices are less expressive).
          */
-        @JsonProperty("voice")
-        @ExcludeMissing
         fun voice(voice: JsonField<Voice>) = apply { this.voice = voice }
 
         /**
@@ -114,22 +114,25 @@ private constructor(
          * Specifies the output audio format. Must be one of `wav`, `mp3`, `flac`, `opus`, or
          * `pcm16`.
          */
-        @JsonProperty("format")
-        @ExcludeMissing
         fun format(format: JsonField<Format>) = apply { this.format = format }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletionAudioParam =

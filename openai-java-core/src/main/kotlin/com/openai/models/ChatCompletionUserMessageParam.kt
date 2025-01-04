@@ -22,23 +22,24 @@ import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.getOrThrow
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 import java.util.Optional
 
 /** Messages sent by an end user, containing prompts or additional context information. */
-@JsonDeserialize(builder = ChatCompletionUserMessageParam.Builder::class)
 @NoAutoDetect
 class ChatCompletionUserMessageParam
+@JsonCreator
 private constructor(
-    private val content: JsonField<Content>,
-    private val role: JsonField<Role>,
-    private val name: JsonField<String>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("content")
+    @ExcludeMissing
+    private val content: JsonField<Content> = JsonMissing.of(),
+    @JsonProperty("role") @ExcludeMissing private val role: JsonField<Role> = JsonMissing.of(),
+    @JsonProperty("name") @ExcludeMissing private val name: JsonField<String> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /** The contents of the user message. */
     fun content(): Content = content.getRequired("content")
@@ -68,6 +69,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): ChatCompletionUserMessageParam = apply {
         if (!validated) {
             content()
@@ -93,26 +96,23 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(chatCompletionUserMessageParam: ChatCompletionUserMessageParam) = apply {
-            this.content = chatCompletionUserMessageParam.content
-            this.role = chatCompletionUserMessageParam.role
-            this.name = chatCompletionUserMessageParam.name
-            additionalProperties(chatCompletionUserMessageParam.additionalProperties)
+            content = chatCompletionUserMessageParam.content
+            role = chatCompletionUserMessageParam.role
+            name = chatCompletionUserMessageParam.name
+            additionalProperties =
+                chatCompletionUserMessageParam.additionalProperties.toMutableMap()
         }
 
         /** The contents of the user message. */
         fun content(content: Content) = content(JsonField.of(content))
 
         /** The contents of the user message. */
-        @JsonProperty("content")
-        @ExcludeMissing
         fun content(content: JsonField<Content>) = apply { this.content = content }
 
         /** The role of the messages author, in this case `user`. */
         fun role(role: Role) = role(JsonField.of(role))
 
         /** The role of the messages author, in this case `user`. */
-        @JsonProperty("role")
-        @ExcludeMissing
         fun role(role: JsonField<Role>) = apply { this.role = role }
 
         /**
@@ -125,22 +125,25 @@ private constructor(
          * An optional name for the participant. Provides the model information to differentiate
          * between participants of the same role.
          */
-        @JsonProperty("name")
-        @ExcludeMissing
         fun name(name: JsonField<String>) = apply { this.name = name }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletionUserMessageParam =
@@ -152,6 +155,7 @@ private constructor(
             )
     }
 
+    /** The contents of the user message. */
     @JsonDeserialize(using = Content.Deserializer::class)
     @JsonSerialize(using = Content.Serializer::class)
     class Content
@@ -177,8 +181,13 @@ private constructor(
 
         fun isArrayOfContentParts(): Boolean = arrayOfContentParts != null
 
+        /** The text contents of the message. */
         fun asTextContent(): String = textContent.getOrThrow("textContent")
-
+        /**
+         * An array of content parts with a defined type. Supported options differ based on the
+         * [model](https://platform.openai.com/docs/models) being used to generate the response. Can
+         * contain text, image, or audio inputs.
+         */
         fun asArrayOfContentParts(): List<ChatCompletionContentPart> =
             arrayOfContentParts.getOrThrow("arrayOfContentParts")
 
@@ -221,8 +230,14 @@ private constructor(
 
         companion object {
 
+            /** The text contents of the message. */
             @JvmStatic fun ofTextContent(textContent: String) = Content(textContent = textContent)
 
+            /**
+             * An array of content parts with a defined type. Supported options differ based on the
+             * [model](https://platform.openai.com/docs/models) being used to generate the response.
+             * Can contain text, image, or audio inputs.
+             */
             @JvmStatic
             fun ofArrayOfContentParts(arrayOfContentParts: List<ChatCompletionContentPart>) =
                 Content(arrayOfContentParts = arrayOfContentParts)

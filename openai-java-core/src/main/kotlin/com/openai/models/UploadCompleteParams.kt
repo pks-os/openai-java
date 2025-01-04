@@ -4,13 +4,14 @@ package com.openai.models
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.http.Headers
 import com.openai.core.http.QueryParams
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import java.util.Objects
 import java.util.Optional
@@ -18,33 +19,29 @@ import java.util.Optional
 class UploadCompleteParams
 constructor(
     private val uploadId: String,
-    private val partIds: List<String>,
-    private val md5: String?,
+    private val body: UploadCompleteBody,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
-    private val additionalBodyProperties: Map<String, JsonValue>,
 ) {
 
     fun uploadId(): String = uploadId
 
-    fun partIds(): List<String> = partIds
+    /** The ordered list of Part IDs. */
+    fun partIds(): List<String> = body.partIds()
 
-    fun md5(): Optional<String> = Optional.ofNullable(md5)
+    /**
+     * The optional md5 checksum for the file contents to verify if the bytes uploaded matches what
+     * you expect.
+     */
+    fun md5(): Optional<String> = body.md5()
 
     fun _additionalHeaders(): Headers = additionalHeaders
 
     fun _additionalQueryParams(): QueryParams = additionalQueryParams
 
-    fun _additionalBodyProperties(): Map<String, JsonValue> = additionalBodyProperties
+    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
 
-    @JvmSynthetic
-    internal fun getBody(): UploadCompleteBody {
-        return UploadCompleteBody(
-            partIds,
-            md5,
-            additionalBodyProperties,
-        )
-    }
+    @JvmSynthetic internal fun getBody(): UploadCompleteBody = body
 
     @JvmSynthetic internal fun getHeaders(): Headers = additionalHeaders
 
@@ -57,23 +54,24 @@ constructor(
         }
     }
 
-    @JsonDeserialize(builder = UploadCompleteBody.Builder::class)
     @NoAutoDetect
     class UploadCompleteBody
+    @JsonCreator
     internal constructor(
-        private val partIds: List<String>?,
-        private val md5: String?,
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonProperty("part_ids") private val partIds: List<String>,
+        @JsonProperty("md5") private val md5: String?,
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
 
         /** The ordered list of Part IDs. */
-        @JsonProperty("part_ids") fun partIds(): List<String>? = partIds
+        @JsonProperty("part_ids") fun partIds(): List<String> = partIds
 
         /**
          * The optional md5 checksum for the file contents to verify if the bytes uploaded matches
          * what you expect.
          */
-        @JsonProperty("md5") fun md5(): String? = md5
+        @JsonProperty("md5") fun md5(): Optional<String> = Optional.ofNullable(md5)
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -88,39 +86,48 @@ constructor(
 
         class Builder {
 
-            private var partIds: List<String>? = null
+            private var partIds: MutableList<String>? = null
             private var md5: String? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
             internal fun from(uploadCompleteBody: UploadCompleteBody) = apply {
-                this.partIds = uploadCompleteBody.partIds
-                this.md5 = uploadCompleteBody.md5
-                additionalProperties(uploadCompleteBody.additionalProperties)
+                partIds = uploadCompleteBody.partIds.toMutableList()
+                md5 = uploadCompleteBody.md5
+                additionalProperties = uploadCompleteBody.additionalProperties.toMutableMap()
             }
 
             /** The ordered list of Part IDs. */
-            @JsonProperty("part_ids")
-            fun partIds(partIds: List<String>) = apply { this.partIds = partIds }
+            fun partIds(partIds: List<String>) = apply { this.partIds = partIds.toMutableList() }
+
+            /** The ordered list of Part IDs. */
+            fun addPartId(partId: String) = apply {
+                partIds = (partIds ?: mutableListOf()).apply { add(partId) }
+            }
 
             /**
              * The optional md5 checksum for the file contents to verify if the bytes uploaded
              * matches what you expect.
              */
-            @JsonProperty("md5") fun md5(md5: String) = apply { this.md5 = md5 }
+            fun md5(md5: String) = apply { this.md5 = md5 }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): UploadCompleteBody =
@@ -160,38 +167,31 @@ constructor(
     class Builder {
 
         private var uploadId: String? = null
-        private var partIds: MutableList<String> = mutableListOf()
-        private var md5: String? = null
+        private var body: UploadCompleteBody.Builder = UploadCompleteBody.builder()
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
-        private var additionalBodyProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
         @JvmSynthetic
         internal fun from(uploadCompleteParams: UploadCompleteParams) = apply {
             uploadId = uploadCompleteParams.uploadId
-            partIds = uploadCompleteParams.partIds.toMutableList()
-            md5 = uploadCompleteParams.md5
+            body = uploadCompleteParams.body.toBuilder()
             additionalHeaders = uploadCompleteParams.additionalHeaders.toBuilder()
             additionalQueryParams = uploadCompleteParams.additionalQueryParams.toBuilder()
-            additionalBodyProperties = uploadCompleteParams.additionalBodyProperties.toMutableMap()
         }
 
         fun uploadId(uploadId: String) = apply { this.uploadId = uploadId }
 
         /** The ordered list of Part IDs. */
-        fun partIds(partIds: List<String>) = apply {
-            this.partIds.clear()
-            this.partIds.addAll(partIds)
-        }
+        fun partIds(partIds: List<String>) = apply { body.partIds(partIds) }
 
         /** The ordered list of Part IDs. */
-        fun addPartId(partId: String) = apply { this.partIds.add(partId) }
+        fun addPartId(partId: String) = apply { body.addPartId(partId) }
 
         /**
          * The optional md5 checksum for the file contents to verify if the bytes uploaded matches
          * what you expect.
          */
-        fun md5(md5: String) = apply { this.md5 = md5 }
+        fun md5(md5: String) = apply { body.md5(md5) }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -292,35 +292,30 @@ constructor(
         }
 
         fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
-            this.additionalBodyProperties.clear()
-            putAllAdditionalBodyProperties(additionalBodyProperties)
+            body.additionalProperties(additionalBodyProperties)
         }
 
         fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
-            additionalBodyProperties.put(key, value)
+            body.putAdditionalProperty(key, value)
         }
 
         fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
             apply {
-                this.additionalBodyProperties.putAll(additionalBodyProperties)
+                body.putAllAdditionalProperties(additionalBodyProperties)
             }
 
-        fun removeAdditionalBodyProperty(key: String) = apply {
-            additionalBodyProperties.remove(key)
-        }
+        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
 
         fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
-            keys.forEach(::removeAdditionalBodyProperty)
+            body.removeAllAdditionalProperties(keys)
         }
 
         fun build(): UploadCompleteParams =
             UploadCompleteParams(
                 checkNotNull(uploadId) { "`uploadId` is required but was not set" },
-                partIds.toImmutable(),
-                md5,
+                body.build(),
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
-                additionalBodyProperties.toImmutable(),
             )
     }
 
@@ -329,11 +324,11 @@ constructor(
             return true
         }
 
-        return /* spotless:off */ other is UploadCompleteParams && uploadId == other.uploadId && partIds == other.partIds && md5 == other.md5 && additionalHeaders == other.additionalHeaders && additionalQueryParams == other.additionalQueryParams && additionalBodyProperties == other.additionalBodyProperties /* spotless:on */
+        return /* spotless:off */ other is UploadCompleteParams && uploadId == other.uploadId && body == other.body && additionalHeaders == other.additionalHeaders && additionalQueryParams == other.additionalQueryParams /* spotless:on */
     }
 
-    override fun hashCode(): Int = /* spotless:off */ Objects.hash(uploadId, partIds, md5, additionalHeaders, additionalQueryParams, additionalBodyProperties) /* spotless:on */
+    override fun hashCode(): Int = /* spotless:off */ Objects.hash(uploadId, body, additionalHeaders, additionalQueryParams) /* spotless:on */
 
     override fun toString() =
-        "UploadCompleteParams{uploadId=$uploadId, partIds=$partIds, md5=$md5, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams, additionalBodyProperties=$additionalBodyProperties}"
+        "UploadCompleteParams{uploadId=$uploadId, body=$body, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

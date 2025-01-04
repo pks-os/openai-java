@@ -6,30 +6,32 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 import java.util.Optional
 
-@JsonDeserialize(builder = CompletionChoice.Builder::class)
 @NoAutoDetect
 class CompletionChoice
+@JsonCreator
 private constructor(
-    private val finishReason: JsonField<FinishReason>,
-    private val index: JsonField<Long>,
-    private val logprobs: JsonField<Logprobs>,
-    private val text: JsonField<String>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("finish_reason")
+    @ExcludeMissing
+    private val finishReason: JsonField<FinishReason> = JsonMissing.of(),
+    @JsonProperty("index") @ExcludeMissing private val index: JsonField<Long> = JsonMissing.of(),
+    @JsonProperty("logprobs")
+    @ExcludeMissing
+    private val logprobs: JsonField<Logprobs> = JsonMissing.of(),
+    @JsonProperty("text") @ExcludeMissing private val text: JsonField<String> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /**
      * The reason the model stopped generating tokens. This will be `stop` if the model hit a
@@ -63,6 +65,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): CompletionChoice = apply {
         if (!validated) {
             finishReason()
@@ -90,11 +94,11 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(completionChoice: CompletionChoice) = apply {
-            this.finishReason = completionChoice.finishReason
-            this.index = completionChoice.index
-            this.logprobs = completionChoice.logprobs
-            this.text = completionChoice.text
-            additionalProperties(completionChoice.additionalProperties)
+            finishReason = completionChoice.finishReason
+            index = completionChoice.index
+            logprobs = completionChoice.logprobs
+            text = completionChoice.text
+            additionalProperties = completionChoice.additionalProperties.toMutableMap()
         }
 
         /**
@@ -111,42 +115,39 @@ private constructor(
          * specified in the request was reached, or `content_filter` if content was omitted due to a
          * flag from our content filters.
          */
-        @JsonProperty("finish_reason")
-        @ExcludeMissing
         fun finishReason(finishReason: JsonField<FinishReason>) = apply {
             this.finishReason = finishReason
         }
 
         fun index(index: Long) = index(JsonField.of(index))
 
-        @JsonProperty("index")
-        @ExcludeMissing
         fun index(index: JsonField<Long>) = apply { this.index = index }
 
         fun logprobs(logprobs: Logprobs) = logprobs(JsonField.of(logprobs))
 
-        @JsonProperty("logprobs")
-        @ExcludeMissing
         fun logprobs(logprobs: JsonField<Logprobs>) = apply { this.logprobs = logprobs }
 
         fun text(text: String) = text(JsonField.of(text))
 
-        @JsonProperty("text")
-        @ExcludeMissing
         fun text(text: JsonField<String>) = apply { this.text = text }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): CompletionChoice =
@@ -222,18 +223,25 @@ private constructor(
         override fun toString() = value.toString()
     }
 
-    @JsonDeserialize(builder = Logprobs.Builder::class)
     @NoAutoDetect
     class Logprobs
+    @JsonCreator
     private constructor(
-        private val textOffset: JsonField<List<Long>>,
-        private val tokenLogprobs: JsonField<List<Double>>,
-        private val tokens: JsonField<List<String>>,
-        private val topLogprobs: JsonField<List<TopLogprob>>,
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonProperty("text_offset")
+        @ExcludeMissing
+        private val textOffset: JsonField<List<Long>> = JsonMissing.of(),
+        @JsonProperty("token_logprobs")
+        @ExcludeMissing
+        private val tokenLogprobs: JsonField<List<Double>> = JsonMissing.of(),
+        @JsonProperty("tokens")
+        @ExcludeMissing
+        private val tokens: JsonField<List<String>> = JsonMissing.of(),
+        @JsonProperty("top_logprobs")
+        @ExcludeMissing
+        private val topLogprobs: JsonField<List<TopLogprob>> = JsonMissing.of(),
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
-
-        private var validated: Boolean = false
 
         fun textOffset(): Optional<List<Long>> =
             Optional.ofNullable(textOffset.getNullable("text_offset"))
@@ -257,6 +265,8 @@ private constructor(
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
 
         fun validate(): Logprobs = apply {
             if (!validated) {
@@ -285,17 +295,15 @@ private constructor(
 
             @JvmSynthetic
             internal fun from(logprobs: Logprobs) = apply {
-                this.textOffset = logprobs.textOffset
-                this.tokenLogprobs = logprobs.tokenLogprobs
-                this.tokens = logprobs.tokens
-                this.topLogprobs = logprobs.topLogprobs
-                additionalProperties(logprobs.additionalProperties)
+                textOffset = logprobs.textOffset
+                tokenLogprobs = logprobs.tokenLogprobs
+                tokens = logprobs.tokens
+                topLogprobs = logprobs.topLogprobs
+                additionalProperties = logprobs.additionalProperties.toMutableMap()
             }
 
             fun textOffset(textOffset: List<Long>) = textOffset(JsonField.of(textOffset))
 
-            @JsonProperty("text_offset")
-            @ExcludeMissing
             fun textOffset(textOffset: JsonField<List<Long>>) = apply {
                 this.textOffset = textOffset
             }
@@ -303,38 +311,37 @@ private constructor(
             fun tokenLogprobs(tokenLogprobs: List<Double>) =
                 tokenLogprobs(JsonField.of(tokenLogprobs))
 
-            @JsonProperty("token_logprobs")
-            @ExcludeMissing
             fun tokenLogprobs(tokenLogprobs: JsonField<List<Double>>) = apply {
                 this.tokenLogprobs = tokenLogprobs
             }
 
             fun tokens(tokens: List<String>) = tokens(JsonField.of(tokens))
 
-            @JsonProperty("tokens")
-            @ExcludeMissing
             fun tokens(tokens: JsonField<List<String>>) = apply { this.tokens = tokens }
 
             fun topLogprobs(topLogprobs: List<TopLogprob>) = topLogprobs(JsonField.of(topLogprobs))
 
-            @JsonProperty("top_logprobs")
-            @ExcludeMissing
             fun topLogprobs(topLogprobs: JsonField<List<TopLogprob>>) = apply {
                 this.topLogprobs = topLogprobs
             }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): Logprobs =
@@ -347,18 +354,19 @@ private constructor(
                 )
         }
 
-        @JsonDeserialize(builder = TopLogprob.Builder::class)
         @NoAutoDetect
         class TopLogprob
+        @JsonCreator
         private constructor(
-            private val additionalProperties: Map<String, JsonValue>,
+            @JsonAnySetter
+            private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
-
-            private var validated: Boolean = false
 
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
 
             fun validate(): TopLogprob = apply {
                 if (!validated) {
@@ -379,23 +387,30 @@ private constructor(
 
                 @JvmSynthetic
                 internal fun from(topLogprob: TopLogprob) = apply {
-                    additionalProperties(topLogprob.additionalProperties)
+                    additionalProperties = topLogprob.additionalProperties.toMutableMap()
                 }
 
                 fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                     this.additionalProperties.clear()
-                    this.additionalProperties.putAll(additionalProperties)
+                    putAllAdditionalProperties(additionalProperties)
                 }
 
-                @JsonAnySetter
                 fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                    this.additionalProperties.put(key, value)
+                    additionalProperties.put(key, value)
                 }
 
                 fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) =
                     apply {
                         this.additionalProperties.putAll(additionalProperties)
                     }
+
+                fun removeAdditionalProperty(key: String) = apply {
+                    additionalProperties.remove(key)
+                }
+
+                fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                    keys.forEach(::removeAdditionalProperty)
+                }
 
                 fun build(): TopLogprob = TopLogprob(additionalProperties.toImmutable())
             }

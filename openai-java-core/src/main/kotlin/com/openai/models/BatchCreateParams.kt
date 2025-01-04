@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
@@ -14,6 +13,7 @@ import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.http.Headers
 import com.openai.core.http.QueryParams
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
@@ -21,53 +21,61 @@ import java.util.Optional
 
 class BatchCreateParams
 constructor(
-    private val completionWindow: CompletionWindow,
-    private val endpoint: Endpoint,
-    private val inputFileId: String,
-    private val metadata: Metadata?,
+    private val body: BatchCreateBody,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
-    private val additionalBodyProperties: Map<String, JsonValue>,
 ) {
 
-    fun completionWindow(): CompletionWindow = completionWindow
+    /**
+     * The time frame within which the batch should be processed. Currently only `24h` is supported.
+     */
+    fun completionWindow(): CompletionWindow = body.completionWindow()
 
-    fun endpoint(): Endpoint = endpoint
+    /**
+     * The endpoint to be used for all requests in the batch. Currently `/v1/chat/completions`,
+     * `/v1/embeddings`, and `/v1/completions` are supported. Note that `/v1/embeddings` batches are
+     * also restricted to a maximum of 50,000 embedding inputs across all requests in the batch.
+     */
+    fun endpoint(): Endpoint = body.endpoint()
 
-    fun inputFileId(): String = inputFileId
+    /**
+     * The ID of an uploaded file that contains requests for the new batch.
+     *
+     * See [upload file](https://platform.openai.com/docs/api-reference/files/create) for how to
+     * upload a file.
+     *
+     * Your input file must be formatted as a
+     * [JSONL file](https://platform.openai.com/docs/api-reference/batch/request-input), and must be
+     * uploaded with the purpose `batch`. The file can contain up to 50,000 requests, and can be up
+     * to 200 MB in size.
+     */
+    fun inputFileId(): String = body.inputFileId()
 
-    fun metadata(): Optional<Metadata> = Optional.ofNullable(metadata)
+    /** Optional custom metadata for the batch. */
+    fun metadata(): Optional<Metadata> = body.metadata()
 
     fun _additionalHeaders(): Headers = additionalHeaders
 
     fun _additionalQueryParams(): QueryParams = additionalQueryParams
 
-    fun _additionalBodyProperties(): Map<String, JsonValue> = additionalBodyProperties
+    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
 
-    @JvmSynthetic
-    internal fun getBody(): BatchCreateBody {
-        return BatchCreateBody(
-            completionWindow,
-            endpoint,
-            inputFileId,
-            metadata,
-            additionalBodyProperties,
-        )
-    }
+    @JvmSynthetic internal fun getBody(): BatchCreateBody = body
 
     @JvmSynthetic internal fun getHeaders(): Headers = additionalHeaders
 
     @JvmSynthetic internal fun getQueryParams(): QueryParams = additionalQueryParams
 
-    @JsonDeserialize(builder = BatchCreateBody.Builder::class)
     @NoAutoDetect
     class BatchCreateBody
+    @JsonCreator
     internal constructor(
-        private val completionWindow: CompletionWindow?,
-        private val endpoint: Endpoint?,
-        private val inputFileId: String?,
-        private val metadata: Metadata?,
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonProperty("completion_window") private val completionWindow: CompletionWindow,
+        @JsonProperty("endpoint") private val endpoint: Endpoint,
+        @JsonProperty("input_file_id") private val inputFileId: String,
+        @JsonProperty("metadata") private val metadata: Metadata?,
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
 
         /**
@@ -75,7 +83,7 @@ constructor(
          * supported.
          */
         @JsonProperty("completion_window")
-        fun completionWindow(): CompletionWindow? = completionWindow
+        fun completionWindow(): CompletionWindow = completionWindow
 
         /**
          * The endpoint to be used for all requests in the batch. Currently `/v1/chat/completions`,
@@ -83,7 +91,7 @@ constructor(
          * are also restricted to a maximum of 50,000 embedding inputs across all requests in the
          * batch.
          */
-        @JsonProperty("endpoint") fun endpoint(): Endpoint? = endpoint
+        @JsonProperty("endpoint") fun endpoint(): Endpoint = endpoint
 
         /**
          * The ID of an uploaded file that contains requests for the new batch.
@@ -96,10 +104,10 @@ constructor(
          * must be uploaded with the purpose `batch`. The file can contain up to 50,000 requests,
          * and can be up to 200 MB in size.
          */
-        @JsonProperty("input_file_id") fun inputFileId(): String? = inputFileId
+        @JsonProperty("input_file_id") fun inputFileId(): String = inputFileId
 
         /** Optional custom metadata for the batch. */
-        @JsonProperty("metadata") fun metadata(): Metadata? = metadata
+        @JsonProperty("metadata") fun metadata(): Optional<Metadata> = Optional.ofNullable(metadata)
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -122,18 +130,17 @@ constructor(
 
             @JvmSynthetic
             internal fun from(batchCreateBody: BatchCreateBody) = apply {
-                this.completionWindow = batchCreateBody.completionWindow
-                this.endpoint = batchCreateBody.endpoint
-                this.inputFileId = batchCreateBody.inputFileId
-                this.metadata = batchCreateBody.metadata
-                additionalProperties(batchCreateBody.additionalProperties)
+                completionWindow = batchCreateBody.completionWindow
+                endpoint = batchCreateBody.endpoint
+                inputFileId = batchCreateBody.inputFileId
+                metadata = batchCreateBody.metadata
+                additionalProperties = batchCreateBody.additionalProperties.toMutableMap()
             }
 
             /**
              * The time frame within which the batch should be processed. Currently only `24h` is
              * supported.
              */
-            @JsonProperty("completion_window")
             fun completionWindow(completionWindow: CompletionWindow) = apply {
                 this.completionWindow = completionWindow
             }
@@ -144,7 +151,6 @@ constructor(
              * that `/v1/embeddings` batches are also restricted to a maximum of 50,000 embedding
              * inputs across all requests in the batch.
              */
-            @JsonProperty("endpoint")
             fun endpoint(endpoint: Endpoint) = apply { this.endpoint = endpoint }
 
             /**
@@ -158,25 +164,28 @@ constructor(
              * must be uploaded with the purpose `batch`. The file can contain up to 50,000
              * requests, and can be up to 200 MB in size.
              */
-            @JsonProperty("input_file_id")
             fun inputFileId(inputFileId: String) = apply { this.inputFileId = inputFileId }
 
             /** Optional custom metadata for the batch. */
-            @JsonProperty("metadata")
             fun metadata(metadata: Metadata) = apply { this.metadata = metadata }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): BatchCreateBody =
@@ -219,23 +228,15 @@ constructor(
     @NoAutoDetect
     class Builder {
 
-        private var completionWindow: CompletionWindow? = null
-        private var endpoint: Endpoint? = null
-        private var inputFileId: String? = null
-        private var metadata: Metadata? = null
+        private var body: BatchCreateBody.Builder = BatchCreateBody.builder()
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
-        private var additionalBodyProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
         @JvmSynthetic
         internal fun from(batchCreateParams: BatchCreateParams) = apply {
-            completionWindow = batchCreateParams.completionWindow
-            endpoint = batchCreateParams.endpoint
-            inputFileId = batchCreateParams.inputFileId
-            metadata = batchCreateParams.metadata
+            body = batchCreateParams.body.toBuilder()
             additionalHeaders = batchCreateParams.additionalHeaders.toBuilder()
             additionalQueryParams = batchCreateParams.additionalQueryParams.toBuilder()
-            additionalBodyProperties = batchCreateParams.additionalBodyProperties.toMutableMap()
         }
 
         /**
@@ -243,7 +244,7 @@ constructor(
          * supported.
          */
         fun completionWindow(completionWindow: CompletionWindow) = apply {
-            this.completionWindow = completionWindow
+            body.completionWindow(completionWindow)
         }
 
         /**
@@ -252,7 +253,7 @@ constructor(
          * are also restricted to a maximum of 50,000 embedding inputs across all requests in the
          * batch.
          */
-        fun endpoint(endpoint: Endpoint) = apply { this.endpoint = endpoint }
+        fun endpoint(endpoint: Endpoint) = apply { body.endpoint(endpoint) }
 
         /**
          * The ID of an uploaded file that contains requests for the new batch.
@@ -265,10 +266,10 @@ constructor(
          * must be uploaded with the purpose `batch`. The file can contain up to 50,000 requests,
          * and can be up to 200 MB in size.
          */
-        fun inputFileId(inputFileId: String) = apply { this.inputFileId = inputFileId }
+        fun inputFileId(inputFileId: String) = apply { body.inputFileId(inputFileId) }
 
         /** Optional custom metadata for the batch. */
-        fun metadata(metadata: Metadata) = apply { this.metadata = metadata }
+        fun metadata(metadata: Metadata) = apply { body.metadata(metadata) }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -369,36 +370,29 @@ constructor(
         }
 
         fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
-            this.additionalBodyProperties.clear()
-            putAllAdditionalBodyProperties(additionalBodyProperties)
+            body.additionalProperties(additionalBodyProperties)
         }
 
         fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
-            additionalBodyProperties.put(key, value)
+            body.putAdditionalProperty(key, value)
         }
 
         fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
             apply {
-                this.additionalBodyProperties.putAll(additionalBodyProperties)
+                body.putAllAdditionalProperties(additionalBodyProperties)
             }
 
-        fun removeAdditionalBodyProperty(key: String) = apply {
-            additionalBodyProperties.remove(key)
-        }
+        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
 
         fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
-            keys.forEach(::removeAdditionalBodyProperty)
+            body.removeAllAdditionalProperties(keys)
         }
 
         fun build(): BatchCreateParams =
             BatchCreateParams(
-                checkNotNull(completionWindow) { "`completionWindow` is required but was not set" },
-                checkNotNull(endpoint) { "`endpoint` is required but was not set" },
-                checkNotNull(inputFileId) { "`inputFileId` is required but was not set" },
-                metadata,
+                body.build(),
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
-                additionalBodyProperties.toImmutable(),
             )
     }
 
@@ -517,11 +511,12 @@ constructor(
     }
 
     /** Optional custom metadata for the batch. */
-    @JsonDeserialize(builder = Metadata.Builder::class)
     @NoAutoDetect
     class Metadata
+    @JsonCreator
     private constructor(
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
 
         @JsonAnyGetter
@@ -541,21 +536,26 @@ constructor(
 
             @JvmSynthetic
             internal fun from(metadata: Metadata) = apply {
-                additionalProperties(metadata.additionalProperties)
+                additionalProperties = metadata.additionalProperties.toMutableMap()
             }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): Metadata = Metadata(additionalProperties.toImmutable())
@@ -583,11 +583,11 @@ constructor(
             return true
         }
 
-        return /* spotless:off */ other is BatchCreateParams && completionWindow == other.completionWindow && endpoint == other.endpoint && inputFileId == other.inputFileId && metadata == other.metadata && additionalHeaders == other.additionalHeaders && additionalQueryParams == other.additionalQueryParams && additionalBodyProperties == other.additionalBodyProperties /* spotless:on */
+        return /* spotless:off */ other is BatchCreateParams && body == other.body && additionalHeaders == other.additionalHeaders && additionalQueryParams == other.additionalQueryParams /* spotless:on */
     }
 
-    override fun hashCode(): Int = /* spotless:off */ Objects.hash(completionWindow, endpoint, inputFileId, metadata, additionalHeaders, additionalQueryParams, additionalBodyProperties) /* spotless:on */
+    override fun hashCode(): Int = /* spotless:off */ Objects.hash(body, additionalHeaders, additionalQueryParams) /* spotless:on */
 
     override fun toString() =
-        "BatchCreateParams{completionWindow=$completionWindow, endpoint=$endpoint, inputFileId=$inputFileId, metadata=$metadata, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams, additionalBodyProperties=$additionalBodyProperties}"
+        "BatchCreateParams{body=$body, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

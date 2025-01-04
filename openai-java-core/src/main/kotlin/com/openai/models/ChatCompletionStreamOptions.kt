@@ -4,27 +4,28 @@ package com.openai.models
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import java.util.Objects
 import java.util.Optional
 
 /** Options for streaming response. Only set this when you set `stream: true`. */
-@JsonDeserialize(builder = ChatCompletionStreamOptions.Builder::class)
 @NoAutoDetect
 class ChatCompletionStreamOptions
+@JsonCreator
 private constructor(
-    private val includeUsage: JsonField<Boolean>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("include_usage")
+    @ExcludeMissing
+    private val includeUsage: JsonField<Boolean> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /**
      * If set, an additional chunk will be streamed before the `data: [DONE]` message. The `usage`
@@ -47,6 +48,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): ChatCompletionStreamOptions = apply {
         if (!validated) {
             includeUsage()
@@ -68,8 +71,8 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(chatCompletionStreamOptions: ChatCompletionStreamOptions) = apply {
-            this.includeUsage = chatCompletionStreamOptions.includeUsage
-            additionalProperties(chatCompletionStreamOptions.additionalProperties)
+            includeUsage = chatCompletionStreamOptions.includeUsage
+            additionalProperties = chatCompletionStreamOptions.additionalProperties.toMutableMap()
         }
 
         /**
@@ -86,24 +89,27 @@ private constructor(
          * the `choices` field will always be an empty array. All other chunks will also include a
          * `usage` field, but with a null value.
          */
-        @JsonProperty("include_usage")
-        @ExcludeMissing
         fun includeUsage(includeUsage: JsonField<Boolean>) = apply {
             this.includeUsage = includeUsage
         }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletionStreamOptions =

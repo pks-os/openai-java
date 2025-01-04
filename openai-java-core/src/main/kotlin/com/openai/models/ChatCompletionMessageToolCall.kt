@@ -6,28 +6,28 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 
-@JsonDeserialize(builder = ChatCompletionMessageToolCall.Builder::class)
 @NoAutoDetect
 class ChatCompletionMessageToolCall
+@JsonCreator
 private constructor(
-    private val id: JsonField<String>,
-    private val type: JsonField<Type>,
-    private val function: JsonField<Function>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("id") @ExcludeMissing private val id: JsonField<String> = JsonMissing.of(),
+    @JsonProperty("type") @ExcludeMissing private val type: JsonField<Type> = JsonMissing.of(),
+    @JsonProperty("function")
+    @ExcludeMissing
+    private val function: JsonField<Function> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /** The ID of the tool call. */
     fun id(): String = id.getRequired("id")
@@ -50,6 +50,8 @@ private constructor(
     @JsonAnyGetter
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+    private var validated: Boolean = false
 
     fun validate(): ChatCompletionMessageToolCall = apply {
         if (!validated) {
@@ -76,46 +78,47 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(chatCompletionMessageToolCall: ChatCompletionMessageToolCall) = apply {
-            this.id = chatCompletionMessageToolCall.id
-            this.type = chatCompletionMessageToolCall.type
-            this.function = chatCompletionMessageToolCall.function
-            additionalProperties(chatCompletionMessageToolCall.additionalProperties)
+            id = chatCompletionMessageToolCall.id
+            type = chatCompletionMessageToolCall.type
+            function = chatCompletionMessageToolCall.function
+            additionalProperties = chatCompletionMessageToolCall.additionalProperties.toMutableMap()
         }
 
         /** The ID of the tool call. */
         fun id(id: String) = id(JsonField.of(id))
 
         /** The ID of the tool call. */
-        @JsonProperty("id") @ExcludeMissing fun id(id: JsonField<String>) = apply { this.id = id }
+        fun id(id: JsonField<String>) = apply { this.id = id }
 
         /** The type of the tool. Currently, only `function` is supported. */
         fun type(type: Type) = type(JsonField.of(type))
 
         /** The type of the tool. Currently, only `function` is supported. */
-        @JsonProperty("type")
-        @ExcludeMissing
         fun type(type: JsonField<Type>) = apply { this.type = type }
 
         /** The function that the model called. */
         fun function(function: Function) = function(JsonField.of(function))
 
         /** The function that the model called. */
-        @JsonProperty("function")
-        @ExcludeMissing
         fun function(function: JsonField<Function>) = apply { this.function = function }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletionMessageToolCall =
@@ -128,16 +131,19 @@ private constructor(
     }
 
     /** The function that the model called. */
-    @JsonDeserialize(builder = Function.Builder::class)
     @NoAutoDetect
     class Function
+    @JsonCreator
     private constructor(
-        private val name: JsonField<String>,
-        private val arguments: JsonField<String>,
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonProperty("name")
+        @ExcludeMissing
+        private val name: JsonField<String> = JsonMissing.of(),
+        @JsonProperty("arguments")
+        @ExcludeMissing
+        private val arguments: JsonField<String> = JsonMissing.of(),
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
-
-        private var validated: Boolean = false
 
         /** The name of the function to call. */
         fun name(): String = name.getRequired("name")
@@ -165,6 +171,8 @@ private constructor(
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+        private var validated: Boolean = false
+
         fun validate(): Function = apply {
             if (!validated) {
                 name()
@@ -188,17 +196,15 @@ private constructor(
 
             @JvmSynthetic
             internal fun from(function: Function) = apply {
-                this.name = function.name
-                this.arguments = function.arguments
-                additionalProperties(function.additionalProperties)
+                name = function.name
+                arguments = function.arguments
+                additionalProperties = function.additionalProperties.toMutableMap()
             }
 
             /** The name of the function to call. */
             fun name(name: String) = name(JsonField.of(name))
 
             /** The name of the function to call. */
-            @JsonProperty("name")
-            @ExcludeMissing
             fun name(name: JsonField<String>) = apply { this.name = name }
 
             /**
@@ -215,22 +221,25 @@ private constructor(
              * parameters not defined by your function schema. Validate the arguments in your code
              * before calling your function.
              */
-            @JsonProperty("arguments")
-            @ExcludeMissing
             fun arguments(arguments: JsonField<String>) = apply { this.arguments = arguments }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): Function =

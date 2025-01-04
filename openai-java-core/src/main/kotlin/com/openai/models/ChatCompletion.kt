@@ -6,35 +6,45 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 import java.util.Optional
 
 /** Represents a chat completion response returned by model, based on the provided input. */
-@JsonDeserialize(builder = ChatCompletion.Builder::class)
 @NoAutoDetect
 class ChatCompletion
+@JsonCreator
 private constructor(
-    private val id: JsonField<String>,
-    private val choices: JsonField<List<Choice>>,
-    private val created: JsonField<Long>,
-    private val model: JsonField<String>,
-    private val serviceTier: JsonField<ServiceTier>,
-    private val systemFingerprint: JsonField<String>,
-    private val object_: JsonField<Object>,
-    private val usage: JsonField<CompletionUsage>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("id") @ExcludeMissing private val id: JsonField<String> = JsonMissing.of(),
+    @JsonProperty("choices")
+    @ExcludeMissing
+    private val choices: JsonField<List<Choice>> = JsonMissing.of(),
+    @JsonProperty("created")
+    @ExcludeMissing
+    private val created: JsonField<Long> = JsonMissing.of(),
+    @JsonProperty("model") @ExcludeMissing private val model: JsonField<String> = JsonMissing.of(),
+    @JsonProperty("service_tier")
+    @ExcludeMissing
+    private val serviceTier: JsonField<ServiceTier> = JsonMissing.of(),
+    @JsonProperty("system_fingerprint")
+    @ExcludeMissing
+    private val systemFingerprint: JsonField<String> = JsonMissing.of(),
+    @JsonProperty("object")
+    @ExcludeMissing
+    private val object_: JsonField<Object> = JsonMissing.of(),
+    @JsonProperty("usage")
+    @ExcludeMissing
+    private val usage: JsonField<CompletionUsage> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /** A unique identifier for the chat completion. */
     fun id(): String = id.getRequired("id")
@@ -106,6 +116,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): ChatCompletion = apply {
         if (!validated) {
             id()
@@ -141,45 +153,39 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(chatCompletion: ChatCompletion) = apply {
-            this.id = chatCompletion.id
-            this.choices = chatCompletion.choices
-            this.created = chatCompletion.created
-            this.model = chatCompletion.model
-            this.serviceTier = chatCompletion.serviceTier
-            this.systemFingerprint = chatCompletion.systemFingerprint
-            this.object_ = chatCompletion.object_
-            this.usage = chatCompletion.usage
-            additionalProperties(chatCompletion.additionalProperties)
+            id = chatCompletion.id
+            choices = chatCompletion.choices
+            created = chatCompletion.created
+            model = chatCompletion.model
+            serviceTier = chatCompletion.serviceTier
+            systemFingerprint = chatCompletion.systemFingerprint
+            object_ = chatCompletion.object_
+            usage = chatCompletion.usage
+            additionalProperties = chatCompletion.additionalProperties.toMutableMap()
         }
 
         /** A unique identifier for the chat completion. */
         fun id(id: String) = id(JsonField.of(id))
 
         /** A unique identifier for the chat completion. */
-        @JsonProperty("id") @ExcludeMissing fun id(id: JsonField<String>) = apply { this.id = id }
+        fun id(id: JsonField<String>) = apply { this.id = id }
 
         /** A list of chat completion choices. Can be more than one if `n` is greater than 1. */
         fun choices(choices: List<Choice>) = choices(JsonField.of(choices))
 
         /** A list of chat completion choices. Can be more than one if `n` is greater than 1. */
-        @JsonProperty("choices")
-        @ExcludeMissing
         fun choices(choices: JsonField<List<Choice>>) = apply { this.choices = choices }
 
         /** The Unix timestamp (in seconds) of when the chat completion was created. */
         fun created(created: Long) = created(JsonField.of(created))
 
         /** The Unix timestamp (in seconds) of when the chat completion was created. */
-        @JsonProperty("created")
-        @ExcludeMissing
         fun created(created: JsonField<Long>) = apply { this.created = created }
 
         /** The model used for the chat completion. */
         fun model(model: String) = model(JsonField.of(model))
 
         /** The model used for the chat completion. */
-        @JsonProperty("model")
-        @ExcludeMissing
         fun model(model: JsonField<String>) = apply { this.model = model }
 
         /**
@@ -192,8 +198,6 @@ private constructor(
          * The service tier used for processing the request. This field is only included if the
          * `service_tier` parameter is specified in the request.
          */
-        @JsonProperty("service_tier")
-        @ExcludeMissing
         fun serviceTier(serviceTier: JsonField<ServiceTier>) = apply {
             this.serviceTier = serviceTier
         }
@@ -213,8 +217,6 @@ private constructor(
          * Can be used in conjunction with the `seed` request parameter to understand when backend
          * changes have been made that might impact determinism.
          */
-        @JsonProperty("system_fingerprint")
-        @ExcludeMissing
         fun systemFingerprint(systemFingerprint: JsonField<String>) = apply {
             this.systemFingerprint = systemFingerprint
         }
@@ -223,30 +225,31 @@ private constructor(
         fun object_(object_: Object) = object_(JsonField.of(object_))
 
         /** The object type, which is always `chat.completion`. */
-        @JsonProperty("object")
-        @ExcludeMissing
         fun object_(object_: JsonField<Object>) = apply { this.object_ = object_ }
 
         /** Usage statistics for the completion request. */
         fun usage(usage: CompletionUsage) = usage(JsonField.of(usage))
 
         /** Usage statistics for the completion request. */
-        @JsonProperty("usage")
-        @ExcludeMissing
         fun usage(usage: JsonField<CompletionUsage>) = apply { this.usage = usage }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletion =
@@ -263,18 +266,25 @@ private constructor(
             )
     }
 
-    @JsonDeserialize(builder = Choice.Builder::class)
     @NoAutoDetect
     class Choice
+    @JsonCreator
     private constructor(
-        private val finishReason: JsonField<FinishReason>,
-        private val index: JsonField<Long>,
-        private val message: JsonField<ChatCompletionMessage>,
-        private val logprobs: JsonField<Logprobs>,
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonProperty("finish_reason")
+        @ExcludeMissing
+        private val finishReason: JsonField<FinishReason> = JsonMissing.of(),
+        @JsonProperty("index")
+        @ExcludeMissing
+        private val index: JsonField<Long> = JsonMissing.of(),
+        @JsonProperty("message")
+        @ExcludeMissing
+        private val message: JsonField<ChatCompletionMessage> = JsonMissing.of(),
+        @JsonProperty("logprobs")
+        @ExcludeMissing
+        private val logprobs: JsonField<Logprobs> = JsonMissing.of(),
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
-
-        private var validated: Boolean = false
 
         /**
          * The reason the model stopped generating tokens. This will be `stop` if the model hit a
@@ -316,6 +326,8 @@ private constructor(
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+        private var validated: Boolean = false
+
         fun validate(): Choice = apply {
             if (!validated) {
                 finishReason()
@@ -343,11 +355,11 @@ private constructor(
 
             @JvmSynthetic
             internal fun from(choice: Choice) = apply {
-                this.finishReason = choice.finishReason
-                this.index = choice.index
-                this.message = choice.message
-                this.logprobs = choice.logprobs
-                additionalProperties(choice.additionalProperties)
+                finishReason = choice.finishReason
+                index = choice.index
+                message = choice.message
+                logprobs = choice.logprobs
+                additionalProperties = choice.additionalProperties.toMutableMap()
             }
 
             /**
@@ -366,8 +378,6 @@ private constructor(
              * due to a flag from our content filters, `tool_calls` if the model called a tool, or
              * `function_call` (deprecated) if the model called a function.
              */
-            @JsonProperty("finish_reason")
-            @ExcludeMissing
             fun finishReason(finishReason: JsonField<FinishReason>) = apply {
                 this.finishReason = finishReason
             }
@@ -376,16 +386,12 @@ private constructor(
             fun index(index: Long) = index(JsonField.of(index))
 
             /** The index of the choice in the list of choices. */
-            @JsonProperty("index")
-            @ExcludeMissing
             fun index(index: JsonField<Long>) = apply { this.index = index }
 
             /** A chat completion message generated by the model. */
             fun message(message: ChatCompletionMessage) = message(JsonField.of(message))
 
             /** A chat completion message generated by the model. */
-            @JsonProperty("message")
-            @ExcludeMissing
             fun message(message: JsonField<ChatCompletionMessage>) = apply {
                 this.message = message
             }
@@ -394,22 +400,25 @@ private constructor(
             fun logprobs(logprobs: Logprobs) = logprobs(JsonField.of(logprobs))
 
             /** Log probability information for the choice. */
-            @JsonProperty("logprobs")
-            @ExcludeMissing
             fun logprobs(logprobs: JsonField<Logprobs>) = apply { this.logprobs = logprobs }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): Choice =
@@ -498,16 +507,19 @@ private constructor(
         }
 
         /** Log probability information for the choice. */
-        @JsonDeserialize(builder = Logprobs.Builder::class)
         @NoAutoDetect
         class Logprobs
+        @JsonCreator
         private constructor(
-            private val content: JsonField<List<ChatCompletionTokenLogprob>>,
-            private val refusal: JsonField<List<ChatCompletionTokenLogprob>>,
-            private val additionalProperties: Map<String, JsonValue>,
+            @JsonProperty("content")
+            @ExcludeMissing
+            private val content: JsonField<List<ChatCompletionTokenLogprob>> = JsonMissing.of(),
+            @JsonProperty("refusal")
+            @ExcludeMissing
+            private val refusal: JsonField<List<ChatCompletionTokenLogprob>> = JsonMissing.of(),
+            @JsonAnySetter
+            private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
-
-            private var validated: Boolean = false
 
             /** A list of message content tokens with log probability information. */
             fun content(): Optional<List<ChatCompletionTokenLogprob>> =
@@ -526,6 +538,8 @@ private constructor(
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
 
             fun validate(): Logprobs = apply {
                 if (!validated) {
@@ -550,9 +564,9 @@ private constructor(
 
                 @JvmSynthetic
                 internal fun from(logprobs: Logprobs) = apply {
-                    this.content = logprobs.content
-                    this.refusal = logprobs.refusal
-                    additionalProperties(logprobs.additionalProperties)
+                    content = logprobs.content
+                    refusal = logprobs.refusal
+                    additionalProperties = logprobs.additionalProperties.toMutableMap()
                 }
 
                 /** A list of message content tokens with log probability information. */
@@ -560,8 +574,6 @@ private constructor(
                     content(JsonField.of(content))
 
                 /** A list of message content tokens with log probability information. */
-                @JsonProperty("content")
-                @ExcludeMissing
                 fun content(content: JsonField<List<ChatCompletionTokenLogprob>>) = apply {
                     this.content = content
                 }
@@ -571,26 +583,31 @@ private constructor(
                     refusal(JsonField.of(refusal))
 
                 /** A list of message refusal tokens with log probability information. */
-                @JsonProperty("refusal")
-                @ExcludeMissing
                 fun refusal(refusal: JsonField<List<ChatCompletionTokenLogprob>>) = apply {
                     this.refusal = refusal
                 }
 
                 fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                     this.additionalProperties.clear()
-                    this.additionalProperties.putAll(additionalProperties)
+                    putAllAdditionalProperties(additionalProperties)
                 }
 
-                @JsonAnySetter
                 fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                    this.additionalProperties.put(key, value)
+                    additionalProperties.put(key, value)
                 }
 
                 fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) =
                     apply {
                         this.additionalProperties.putAll(additionalProperties)
                     }
+
+                fun removeAdditionalProperty(key: String) = apply {
+                    additionalProperties.remove(key)
+                }
+
+                fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                    keys.forEach(::removeAdditionalProperty)
+                }
 
                 fun build(): Logprobs =
                     Logprobs(

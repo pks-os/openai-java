@@ -4,28 +4,29 @@ package com.openai.models
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonAnySetter
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
 import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import java.util.Objects
 
 /** The request counts for different statuses within the batch. */
-@JsonDeserialize(builder = BatchRequestCounts.Builder::class)
 @NoAutoDetect
 class BatchRequestCounts
+@JsonCreator
 private constructor(
-    private val total: JsonField<Long>,
-    private val completed: JsonField<Long>,
-    private val failed: JsonField<Long>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("total") @ExcludeMissing private val total: JsonField<Long> = JsonMissing.of(),
+    @JsonProperty("completed")
+    @ExcludeMissing
+    private val completed: JsonField<Long> = JsonMissing.of(),
+    @JsonProperty("failed") @ExcludeMissing private val failed: JsonField<Long> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /** Total number of requests in the batch. */
     fun total(): Long = total.getRequired("total")
@@ -48,6 +49,8 @@ private constructor(
     @JsonAnyGetter
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+    private var validated: Boolean = false
 
     fun validate(): BatchRequestCounts = apply {
         if (!validated) {
@@ -74,48 +77,47 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(batchRequestCounts: BatchRequestCounts) = apply {
-            this.total = batchRequestCounts.total
-            this.completed = batchRequestCounts.completed
-            this.failed = batchRequestCounts.failed
-            additionalProperties(batchRequestCounts.additionalProperties)
+            total = batchRequestCounts.total
+            completed = batchRequestCounts.completed
+            failed = batchRequestCounts.failed
+            additionalProperties = batchRequestCounts.additionalProperties.toMutableMap()
         }
 
         /** Total number of requests in the batch. */
         fun total(total: Long) = total(JsonField.of(total))
 
         /** Total number of requests in the batch. */
-        @JsonProperty("total")
-        @ExcludeMissing
         fun total(total: JsonField<Long>) = apply { this.total = total }
 
         /** Number of requests that have been completed successfully. */
         fun completed(completed: Long) = completed(JsonField.of(completed))
 
         /** Number of requests that have been completed successfully. */
-        @JsonProperty("completed")
-        @ExcludeMissing
         fun completed(completed: JsonField<Long>) = apply { this.completed = completed }
 
         /** Number of requests that have failed. */
         fun failed(failed: Long) = failed(JsonField.of(failed))
 
         /** Number of requests that have failed. */
-        @JsonProperty("failed")
-        @ExcludeMissing
         fun failed(failed: JsonField<Long>) = apply { this.failed = failed }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): BatchRequestCounts =

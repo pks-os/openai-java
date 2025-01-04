@@ -22,6 +22,7 @@ import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.getOrThrow
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
@@ -29,21 +30,27 @@ import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
 /** Messages sent by the model in response to user messages. */
-@JsonDeserialize(builder = ChatCompletionAssistantMessageParam.Builder::class)
 @NoAutoDetect
 class ChatCompletionAssistantMessageParam
+@JsonCreator
 private constructor(
-    private val content: JsonField<Content>,
-    private val refusal: JsonField<String>,
-    private val role: JsonField<Role>,
-    private val name: JsonField<String>,
-    private val audio: JsonField<Audio>,
-    private val toolCalls: JsonField<List<ChatCompletionMessageToolCall>>,
-    private val functionCall: JsonField<FunctionCall>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("content")
+    @ExcludeMissing
+    private val content: JsonField<Content> = JsonMissing.of(),
+    @JsonProperty("refusal")
+    @ExcludeMissing
+    private val refusal: JsonField<String> = JsonMissing.of(),
+    @JsonProperty("role") @ExcludeMissing private val role: JsonField<Role> = JsonMissing.of(),
+    @JsonProperty("name") @ExcludeMissing private val name: JsonField<String> = JsonMissing.of(),
+    @JsonProperty("audio") @ExcludeMissing private val audio: JsonField<Audio> = JsonMissing.of(),
+    @JsonProperty("tool_calls")
+    @ExcludeMissing
+    private val toolCalls: JsonField<List<ChatCompletionMessageToolCall>> = JsonMissing.of(),
+    @JsonProperty("function_call")
+    @ExcludeMissing
+    private val functionCall: JsonField<FunctionCall> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /**
      * The contents of the assistant message. Required unless `tool_calls` or `function_call` is
@@ -117,6 +124,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): ChatCompletionAssistantMessageParam = apply {
         if (!validated) {
             content()
@@ -152,14 +161,15 @@ private constructor(
         internal fun from(
             chatCompletionAssistantMessageParam: ChatCompletionAssistantMessageParam
         ) = apply {
-            this.content = chatCompletionAssistantMessageParam.content
-            this.refusal = chatCompletionAssistantMessageParam.refusal
-            this.role = chatCompletionAssistantMessageParam.role
-            this.name = chatCompletionAssistantMessageParam.name
-            this.audio = chatCompletionAssistantMessageParam.audio
-            this.toolCalls = chatCompletionAssistantMessageParam.toolCalls
-            this.functionCall = chatCompletionAssistantMessageParam.functionCall
-            additionalProperties(chatCompletionAssistantMessageParam.additionalProperties)
+            content = chatCompletionAssistantMessageParam.content
+            refusal = chatCompletionAssistantMessageParam.refusal
+            role = chatCompletionAssistantMessageParam.role
+            name = chatCompletionAssistantMessageParam.name
+            audio = chatCompletionAssistantMessageParam.audio
+            toolCalls = chatCompletionAssistantMessageParam.toolCalls
+            functionCall = chatCompletionAssistantMessageParam.functionCall
+            additionalProperties =
+                chatCompletionAssistantMessageParam.additionalProperties.toMutableMap()
         }
 
         /**
@@ -172,24 +182,18 @@ private constructor(
          * The contents of the assistant message. Required unless `tool_calls` or `function_call` is
          * specified.
          */
-        @JsonProperty("content")
-        @ExcludeMissing
         fun content(content: JsonField<Content>) = apply { this.content = content }
 
         /** The refusal message by the assistant. */
         fun refusal(refusal: String) = refusal(JsonField.of(refusal))
 
         /** The refusal message by the assistant. */
-        @JsonProperty("refusal")
-        @ExcludeMissing
         fun refusal(refusal: JsonField<String>) = apply { this.refusal = refusal }
 
         /** The role of the messages author, in this case `assistant`. */
         fun role(role: Role) = role(JsonField.of(role))
 
         /** The role of the messages author, in this case `assistant`. */
-        @JsonProperty("role")
-        @ExcludeMissing
         fun role(role: JsonField<Role>) = apply { this.role = role }
 
         /**
@@ -202,8 +206,6 @@ private constructor(
          * An optional name for the participant. Provides the model information to differentiate
          * between participants of the same role.
          */
-        @JsonProperty("name")
-        @ExcludeMissing
         fun name(name: JsonField<String>) = apply { this.name = name }
 
         /**
@@ -216,8 +218,6 @@ private constructor(
          * Data about a previous audio response from the model.
          * [Learn more](https://platform.openai.com/docs/guides/audio).
          */
-        @JsonProperty("audio")
-        @ExcludeMissing
         fun audio(audio: JsonField<Audio>) = apply { this.audio = audio }
 
         /** The tool calls generated by the model, such as function calls. */
@@ -225,8 +225,6 @@ private constructor(
             toolCalls(JsonField.of(toolCalls))
 
         /** The tool calls generated by the model, such as function calls. */
-        @JsonProperty("tool_calls")
-        @ExcludeMissing
         fun toolCalls(toolCalls: JsonField<List<ChatCompletionMessageToolCall>>) = apply {
             this.toolCalls = toolCalls
         }
@@ -241,24 +239,27 @@ private constructor(
          * Deprecated and replaced by `tool_calls`. The name and arguments of a function that should
          * be called, as generated by the model.
          */
-        @JsonProperty("function_call")
-        @ExcludeMissing
         fun functionCall(functionCall: JsonField<FunctionCall>) = apply {
             this.functionCall = functionCall
         }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletionAssistantMessageParam =
@@ -329,15 +330,14 @@ private constructor(
      * Data about a previous audio response from the model.
      * [Learn more](https://platform.openai.com/docs/guides/audio).
      */
-    @JsonDeserialize(builder = Audio.Builder::class)
     @NoAutoDetect
     class Audio
+    @JsonCreator
     private constructor(
-        private val id: JsonField<String>,
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonProperty("id") @ExcludeMissing private val id: JsonField<String> = JsonMissing.of(),
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
-
-        private var validated: Boolean = false
 
         /** Unique identifier for a previous audio response from the model. */
         fun id(): String = id.getRequired("id")
@@ -348,6 +348,8 @@ private constructor(
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
 
         fun validate(): Audio = apply {
             if (!validated) {
@@ -370,30 +372,33 @@ private constructor(
 
             @JvmSynthetic
             internal fun from(audio: Audio) = apply {
-                this.id = audio.id
-                additionalProperties(audio.additionalProperties)
+                id = audio.id
+                additionalProperties = audio.additionalProperties.toMutableMap()
             }
 
             /** Unique identifier for a previous audio response from the model. */
             fun id(id: String) = id(JsonField.of(id))
 
             /** Unique identifier for a previous audio response from the model. */
-            @JsonProperty("id")
-            @ExcludeMissing
             fun id(id: JsonField<String>) = apply { this.id = id }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): Audio = Audio(id, additionalProperties.toImmutable())
@@ -416,6 +421,10 @@ private constructor(
         override fun toString() = "Audio{id=$id, additionalProperties=$additionalProperties}"
     }
 
+    /**
+     * The contents of the assistant message. Required unless `tool_calls` or `function_call` is
+     * specified.
+     */
     @JsonDeserialize(using = Content.Deserializer::class)
     @JsonSerialize(using = Content.Serializer::class)
     class Content
@@ -442,8 +451,12 @@ private constructor(
 
         fun isArrayOfContentParts(): Boolean = arrayOfContentParts != null
 
+        /** The contents of the assistant message. */
         fun asTextContent(): String = textContent.getOrThrow("textContent")
-
+        /**
+         * An array of content parts with a defined type. Can be one or more of type `text`, or
+         * exactly one of type `refusal`.
+         */
         fun asArrayOfContentParts(): List<ChatCompletionRequestAssistantMessageContentPart> =
             arrayOfContentParts.getOrThrow("arrayOfContentParts")
 
@@ -486,8 +499,13 @@ private constructor(
 
         companion object {
 
+            /** The contents of the assistant message. */
             @JvmStatic fun ofTextContent(textContent: String) = Content(textContent = textContent)
 
+            /**
+             * An array of content parts with a defined type. Can be one or more of type `text`, or
+             * exactly one of type `refusal`.
+             */
             @JvmStatic
             fun ofArrayOfContentParts(
                 arrayOfContentParts: List<ChatCompletionRequestAssistantMessageContentPart>
@@ -544,6 +562,7 @@ private constructor(
             }
         }
 
+        /** Learn about [text inputs](https://platform.openai.com/docs/guides/text-generation). */
         @JsonDeserialize(
             using = ChatCompletionRequestAssistantMessageContentPart.Deserializer::class
         )
@@ -571,6 +590,9 @@ private constructor(
             fun isChatCompletionContentPartRefusal(): Boolean =
                 chatCompletionContentPartRefusal != null
 
+            /**
+             * Learn about [text inputs](https://platform.openai.com/docs/guides/text-generation).
+             */
             fun asChatCompletionContentPartText(): ChatCompletionContentPartText =
                 chatCompletionContentPartText.getOrThrow("chatCompletionContentPartText")
 
@@ -633,6 +655,10 @@ private constructor(
 
             companion object {
 
+                /**
+                 * Learn about
+                 * [text inputs](https://platform.openai.com/docs/guides/text-generation).
+                 */
                 @JvmStatic
                 fun ofChatCompletionContentPartText(
                     chatCompletionContentPartText: ChatCompletionContentPartText
@@ -740,16 +766,19 @@ private constructor(
      * Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be
      * called, as generated by the model.
      */
-    @JsonDeserialize(builder = FunctionCall.Builder::class)
     @NoAutoDetect
     class FunctionCall
+    @JsonCreator
     private constructor(
-        private val arguments: JsonField<String>,
-        private val name: JsonField<String>,
-        private val additionalProperties: Map<String, JsonValue>,
+        @JsonProperty("arguments")
+        @ExcludeMissing
+        private val arguments: JsonField<String> = JsonMissing.of(),
+        @JsonProperty("name")
+        @ExcludeMissing
+        private val name: JsonField<String> = JsonMissing.of(),
+        @JsonAnySetter
+        private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
-
-        private var validated: Boolean = false
 
         /**
          * The arguments to call the function with, as generated by the model in JSON format. Note
@@ -777,6 +806,8 @@ private constructor(
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+        private var validated: Boolean = false
+
         fun validate(): FunctionCall = apply {
             if (!validated) {
                 arguments()
@@ -800,9 +831,9 @@ private constructor(
 
             @JvmSynthetic
             internal fun from(functionCall: FunctionCall) = apply {
-                this.arguments = functionCall.arguments
-                this.name = functionCall.name
-                additionalProperties(functionCall.additionalProperties)
+                arguments = functionCall.arguments
+                name = functionCall.name
+                additionalProperties = functionCall.additionalProperties.toMutableMap()
             }
 
             /**
@@ -819,30 +850,31 @@ private constructor(
              * parameters not defined by your function schema. Validate the arguments in your code
              * before calling your function.
              */
-            @JsonProperty("arguments")
-            @ExcludeMissing
             fun arguments(arguments: JsonField<String>) = apply { this.arguments = arguments }
 
             /** The name of the function to call. */
             fun name(name: String) = name(JsonField.of(name))
 
             /** The name of the function to call. */
-            @JsonProperty("name")
-            @ExcludeMissing
             fun name(name: JsonField<String>) = apply { this.name = name }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
-                this.additionalProperties.putAll(additionalProperties)
+                putAllAdditionalProperties(additionalProperties)
             }
 
-            @JsonAnySetter
             fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-                this.additionalProperties.put(key, value)
+                additionalProperties.put(key, value)
             }
 
             fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.putAll(additionalProperties)
+            }
+
+            fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+            fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                keys.forEach(::removeAdditionalProperty)
             }
 
             fun build(): FunctionCall =

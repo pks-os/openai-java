@@ -22,22 +22,25 @@ import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.getOrThrow
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 import java.util.Optional
 
-@JsonDeserialize(builder = ChatCompletionToolMessageParam.Builder::class)
 @NoAutoDetect
 class ChatCompletionToolMessageParam
+@JsonCreator
 private constructor(
-    private val role: JsonField<Role>,
-    private val content: JsonField<Content>,
-    private val toolCallId: JsonField<String>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("role") @ExcludeMissing private val role: JsonField<Role> = JsonMissing.of(),
+    @JsonProperty("content")
+    @ExcludeMissing
+    private val content: JsonField<Content> = JsonMissing.of(),
+    @JsonProperty("tool_call_id")
+    @ExcludeMissing
+    private val toolCallId: JsonField<String> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /** The role of the messages author, in this case `tool`. */
     fun role(): Role = role.getRequired("role")
@@ -60,6 +63,8 @@ private constructor(
     @JsonAnyGetter
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+    private var validated: Boolean = false
 
     fun validate(): ChatCompletionToolMessageParam = apply {
         if (!validated) {
@@ -86,48 +91,48 @@ private constructor(
 
         @JvmSynthetic
         internal fun from(chatCompletionToolMessageParam: ChatCompletionToolMessageParam) = apply {
-            this.role = chatCompletionToolMessageParam.role
-            this.content = chatCompletionToolMessageParam.content
-            this.toolCallId = chatCompletionToolMessageParam.toolCallId
-            additionalProperties(chatCompletionToolMessageParam.additionalProperties)
+            role = chatCompletionToolMessageParam.role
+            content = chatCompletionToolMessageParam.content
+            toolCallId = chatCompletionToolMessageParam.toolCallId
+            additionalProperties =
+                chatCompletionToolMessageParam.additionalProperties.toMutableMap()
         }
 
         /** The role of the messages author, in this case `tool`. */
         fun role(role: Role) = role(JsonField.of(role))
 
         /** The role of the messages author, in this case `tool`. */
-        @JsonProperty("role")
-        @ExcludeMissing
         fun role(role: JsonField<Role>) = apply { this.role = role }
 
         /** The contents of the tool message. */
         fun content(content: Content) = content(JsonField.of(content))
 
         /** The contents of the tool message. */
-        @JsonProperty("content")
-        @ExcludeMissing
         fun content(content: JsonField<Content>) = apply { this.content = content }
 
         /** Tool call that this message is responding to. */
         fun toolCallId(toolCallId: String) = toolCallId(JsonField.of(toolCallId))
 
         /** Tool call that this message is responding to. */
-        @JsonProperty("tool_call_id")
-        @ExcludeMissing
         fun toolCallId(toolCallId: JsonField<String>) = apply { this.toolCallId = toolCallId }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletionToolMessageParam =
@@ -139,6 +144,7 @@ private constructor(
             )
     }
 
+    /** The contents of the tool message. */
     @JsonDeserialize(using = Content.Deserializer::class)
     @JsonSerialize(using = Content.Serializer::class)
     class Content
@@ -163,8 +169,12 @@ private constructor(
 
         fun isArrayOfContentParts(): Boolean = arrayOfContentParts != null
 
+        /** The contents of the tool message. */
         fun asTextContent(): String = textContent.getOrThrow("textContent")
-
+        /**
+         * An array of content parts with a defined type. For tool messages, only type `text` is
+         * supported.
+         */
         fun asArrayOfContentParts(): List<ChatCompletionContentPartText> =
             arrayOfContentParts.getOrThrow("arrayOfContentParts")
 
@@ -208,8 +218,13 @@ private constructor(
 
         companion object {
 
+            /** The contents of the tool message. */
             @JvmStatic fun ofTextContent(textContent: String) = Content(textContent = textContent)
 
+            /**
+             * An array of content parts with a defined type. For tool messages, only type `text` is
+             * supported.
+             */
             @JvmStatic
             fun ofArrayOfContentParts(arrayOfContentParts: List<ChatCompletionContentPartText>) =
                 Content(arrayOfContentParts = arrayOfContentParts)

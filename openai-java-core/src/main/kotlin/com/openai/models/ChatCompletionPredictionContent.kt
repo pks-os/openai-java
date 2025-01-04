@@ -22,6 +22,7 @@ import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.getOrThrow
+import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
@@ -30,16 +31,16 @@ import java.util.Optional
 /**
  * Static predicted output content, such as the content of a text file that is being regenerated.
  */
-@JsonDeserialize(builder = ChatCompletionPredictionContent.Builder::class)
 @NoAutoDetect
 class ChatCompletionPredictionContent
+@JsonCreator
 private constructor(
-    private val type: JsonField<Type>,
-    private val content: JsonField<Content>,
-    private val additionalProperties: Map<String, JsonValue>,
+    @JsonProperty("type") @ExcludeMissing private val type: JsonField<Type> = JsonMissing.of(),
+    @JsonProperty("content")
+    @ExcludeMissing
+    private val content: JsonField<Content> = JsonMissing.of(),
+    @JsonAnySetter private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
 ) {
-
-    private var validated: Boolean = false
 
     /**
      * The type of the predicted content you want to provide. This type is currently always
@@ -69,6 +70,8 @@ private constructor(
     @ExcludeMissing
     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
 
+    private var validated: Boolean = false
+
     fun validate(): ChatCompletionPredictionContent = apply {
         if (!validated) {
             type()
@@ -93,9 +96,10 @@ private constructor(
         @JvmSynthetic
         internal fun from(chatCompletionPredictionContent: ChatCompletionPredictionContent) =
             apply {
-                this.type = chatCompletionPredictionContent.type
-                this.content = chatCompletionPredictionContent.content
-                additionalProperties(chatCompletionPredictionContent.additionalProperties)
+                type = chatCompletionPredictionContent.type
+                content = chatCompletionPredictionContent.content
+                additionalProperties =
+                    chatCompletionPredictionContent.additionalProperties.toMutableMap()
             }
 
         /**
@@ -108,8 +112,6 @@ private constructor(
          * The type of the predicted content you want to provide. This type is currently always
          * `content`.
          */
-        @JsonProperty("type")
-        @ExcludeMissing
         fun type(type: JsonField<Type>) = apply { this.type = type }
 
         /**
@@ -122,22 +124,25 @@ private constructor(
          * The content that should be matched when generating a model response. If generated tokens
          * would match this content, the entire model response can be returned much more quickly.
          */
-        @JsonProperty("content")
-        @ExcludeMissing
         fun content(content: JsonField<Content>) = apply { this.content = content }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
-            this.additionalProperties.putAll(additionalProperties)
+            putAllAdditionalProperties(additionalProperties)
         }
 
-        @JsonAnySetter
         fun putAdditionalProperty(key: String, value: JsonValue) = apply {
-            this.additionalProperties.put(key, value)
+            additionalProperties.put(key, value)
         }
 
         fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.putAll(additionalProperties)
+        }
+
+        fun removeAdditionalProperty(key: String) = apply { additionalProperties.remove(key) }
+
+        fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalProperty)
         }
 
         fun build(): ChatCompletionPredictionContent =
@@ -148,6 +153,10 @@ private constructor(
             )
     }
 
+    /**
+     * The content that should be matched when generating a model response. If generated tokens
+     * would match this content, the entire model response can be returned much more quickly.
+     */
     @JsonDeserialize(using = Content.Deserializer::class)
     @JsonSerialize(using = Content.Serializer::class)
     class Content
@@ -176,8 +185,16 @@ private constructor(
 
         fun isArrayOfContentParts(): Boolean = arrayOfContentParts != null
 
+        /**
+         * The content used for a Predicted Output. This is often the text of a file you are
+         * regenerating with minor changes.
+         */
         fun asTextContent(): String = textContent.getOrThrow("textContent")
-
+        /**
+         * An array of content parts with a defined type. Supported options differ based on the
+         * [model](https://platform.openai.com/docs/models) being used to generate the response. Can
+         * contain text inputs.
+         */
         fun asArrayOfContentParts(): List<ChatCompletionContentPartText> =
             arrayOfContentParts.getOrThrow("arrayOfContentParts")
 
@@ -221,8 +238,17 @@ private constructor(
 
         companion object {
 
+            /**
+             * The content used for a Predicted Output. This is often the text of a file you are
+             * regenerating with minor changes.
+             */
             @JvmStatic fun ofTextContent(textContent: String) = Content(textContent = textContent)
 
+            /**
+             * An array of content parts with a defined type. Supported options differ based on the
+             * [model](https://platform.openai.com/docs/models) being used to generate the response.
+             * Can contain text inputs.
+             */
             @JvmStatic
             fun ofArrayOfContentParts(arrayOfContentParts: List<ChatCompletionContentPartText>) =
                 Content(arrayOfContentParts = arrayOfContentParts)
