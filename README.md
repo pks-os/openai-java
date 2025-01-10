@@ -9,7 +9,7 @@
 
 <!-- x-release-please-start-version -->
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.openai/openai-java)](https://central.sonatype.com/artifact/com.openai/openai-java/0.9.1)
+[![Maven Central](https://img.shields.io/maven-central/v/com.openai/openai-java)](https://central.sonatype.com/artifact/com.openai/openai-java/0.11.1)
 
 <!-- x-release-please-end -->
 
@@ -32,7 +32,7 @@ The REST API documentation can be found on [platform.openai.com](https://platfo
 <!-- x-release-please-start-version -->
 
 ```kotlin
-implementation("com.openai:openai-java:0.9.1")
+implementation("com.openai:openai-java:0.11.1")
 ```
 
 #### Maven
@@ -41,7 +41,7 @@ implementation("com.openai:openai-java:0.9.1")
 <dependency>
     <groupId>com.openai</groupId>
     <artifactId>openai-java</artifactId>
-    <version>0.9.1</version>
+    <version>0.11.1</version>
 </dependency>
 ```
 
@@ -417,7 +417,7 @@ $ export OPENAI_LOG=debug
 
 This package generally follows [SemVer](https://semver.org/spec/v2.0.0.html) conventions, though certain backwards-incompatible changes may be released as minor versions:
 
-1. Changes to library internals which are technically public but not intended or documented for external use. _(Please open a GitHub issue to let us know if you are relying on such internals)_.
+1. Changes to library internals which are technically public but not intended or documented for external use. _(Please open a GitHub issue to let us know if you are relying on such internals.)_
 2. Changes that we do not expect to impact the vast majority of users in practice.
 
 We take backwards-compatibility seriously and work hard to ensure you can rely on a smooth upgrade experience.

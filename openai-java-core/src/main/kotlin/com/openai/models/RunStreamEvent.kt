@@ -56,45 +56,54 @@ private constructor(
      * created.
      */
     fun threadRunCreated(): Optional<ThreadRunCreated> = Optional.ofNullable(threadRunCreated)
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to a
      * `queued` status.
      */
     fun threadRunQueued(): Optional<ThreadRunQueued> = Optional.ofNullable(threadRunQueued)
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to an
      * `in_progress` status.
      */
     fun threadRunInProgress(): Optional<ThreadRunInProgress> =
         Optional.ofNullable(threadRunInProgress)
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to a
      * `requires_action` status.
      */
     fun threadRunRequiresAction(): Optional<ThreadRunRequiresAction> =
         Optional.ofNullable(threadRunRequiresAction)
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) is completed.
      */
     fun threadRunCompleted(): Optional<ThreadRunCompleted> = Optional.ofNullable(threadRunCompleted)
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) ends with
      * status `incomplete`.
      */
     fun threadRunIncomplete(): Optional<ThreadRunIncomplete> =
         Optional.ofNullable(threadRunIncomplete)
+
     /** Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) fails. */
     fun threadRunFailed(): Optional<ThreadRunFailed> = Optional.ofNullable(threadRunFailed)
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to a
      * `cancelling` status.
      */
     fun threadRunCancelling(): Optional<ThreadRunCancelling> =
         Optional.ofNullable(threadRunCancelling)
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) is cancelled.
      */
     fun threadRunCancelled(): Optional<ThreadRunCancelled> = Optional.ofNullable(threadRunCancelled)
+
     /** Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) expires. */
     fun threadRunExpired(): Optional<ThreadRunExpired> = Optional.ofNullable(threadRunExpired)
 
@@ -123,47 +132,56 @@ private constructor(
      * created.
      */
     fun asThreadRunCreated(): ThreadRunCreated = threadRunCreated.getOrThrow("threadRunCreated")
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to a
      * `queued` status.
      */
     fun asThreadRunQueued(): ThreadRunQueued = threadRunQueued.getOrThrow("threadRunQueued")
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to an
      * `in_progress` status.
      */
     fun asThreadRunInProgress(): ThreadRunInProgress =
         threadRunInProgress.getOrThrow("threadRunInProgress")
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to a
      * `requires_action` status.
      */
     fun asThreadRunRequiresAction(): ThreadRunRequiresAction =
         threadRunRequiresAction.getOrThrow("threadRunRequiresAction")
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) is completed.
      */
     fun asThreadRunCompleted(): ThreadRunCompleted =
         threadRunCompleted.getOrThrow("threadRunCompleted")
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) ends with
      * status `incomplete`.
      */
     fun asThreadRunIncomplete(): ThreadRunIncomplete =
         threadRunIncomplete.getOrThrow("threadRunIncomplete")
+
     /** Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) fails. */
     fun asThreadRunFailed(): ThreadRunFailed = threadRunFailed.getOrThrow("threadRunFailed")
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) moves to a
      * `cancelling` status.
      */
     fun asThreadRunCancelling(): ThreadRunCancelling =
         threadRunCancelling.getOrThrow("threadRunCancelling")
+
     /**
      * Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) is cancelled.
      */
     fun asThreadRunCancelled(): ThreadRunCancelled =
         threadRunCancelled.getOrThrow("threadRunCancelled")
+
     /** Occurs when a [run](https://platform.openai.com/docs/api-reference/runs/object) expires. */
     fun asThreadRunExpired(): ThreadRunExpired = threadRunExpired.getOrThrow("threadRunExpired")
 
@@ -485,9 +503,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -512,8 +530,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -560,8 +578,8 @@ private constructor(
 
             fun build(): ThreadRunCreated =
                 ThreadRunCreated(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -663,9 +681,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -690,8 +708,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -738,8 +756,8 @@ private constructor(
 
             fun build(): ThreadRunQueued =
                 ThreadRunQueued(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -841,9 +859,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -868,8 +886,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -916,8 +934,8 @@ private constructor(
 
             fun build(): ThreadRunInProgress =
                 ThreadRunInProgress(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1019,9 +1037,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1046,8 +1064,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1094,8 +1112,8 @@ private constructor(
 
             fun build(): ThreadRunRequiresAction =
                 ThreadRunRequiresAction(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1196,9 +1214,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1223,8 +1241,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1271,8 +1289,8 @@ private constructor(
 
             fun build(): ThreadRunCompleted =
                 ThreadRunCompleted(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1374,9 +1392,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1401,8 +1419,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1449,8 +1467,8 @@ private constructor(
 
             fun build(): ThreadRunIncomplete =
                 ThreadRunIncomplete(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1549,9 +1567,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1576,8 +1594,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1624,8 +1642,8 @@ private constructor(
 
             fun build(): ThreadRunFailed =
                 ThreadRunFailed(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1727,9 +1745,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1754,8 +1772,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1802,8 +1820,8 @@ private constructor(
 
             fun build(): ThreadRunCancelling =
                 ThreadRunCancelling(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1904,9 +1922,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1931,8 +1949,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1979,8 +1997,8 @@ private constructor(
 
             fun build(): ThreadRunCancelled =
                 ThreadRunCancelled(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -2079,9 +2097,9 @@ private constructor(
          * Represents an execution run on a
          * [thread](https://platform.openai.com/docs/api-reference/threads).
          */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<Run> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -2106,8 +2124,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<Run> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<Run>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -2154,8 +2172,8 @@ private constructor(
 
             fun build(): ThreadRunExpired =
                 ThreadRunExpired(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }

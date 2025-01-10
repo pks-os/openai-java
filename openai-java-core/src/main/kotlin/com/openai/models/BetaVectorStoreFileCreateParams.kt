@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.openai.core.ExcludeMissing
+import com.openai.core.JsonField
+import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.http.Headers
@@ -16,6 +18,11 @@ import com.openai.core.toImmutable
 import java.util.Objects
 import java.util.Optional
 
+/**
+ * Create a vector store file by attaching a
+ * [File](https://platform.openai.com/docs/api-reference/files) to a
+ * [vector store](https://platform.openai.com/docs/api-reference/vector-stores/object).
+ */
 class BetaVectorStoreFileCreateParams
 constructor(
     private val vectorStoreId: String,
@@ -38,11 +45,23 @@ constructor(
      */
     fun chunkingStrategy(): Optional<FileChunkingStrategyParam> = body.chunkingStrategy()
 
+    /**
+     * A [File](https://platform.openai.com/docs/api-reference/files) ID that the vector store
+     * should use. Useful for tools like `file_search` that can access files.
+     */
+    fun _fileId(): JsonField<String> = body._fileId()
+
+    /**
+     * The chunking strategy used to chunk the file(s). If not set, will use the `auto` strategy.
+     * Only applicable if `file_ids` is non-empty.
+     */
+    fun _chunkingStrategy(): JsonField<FileChunkingStrategyParam> = body._chunkingStrategy()
+
+    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
+
     fun _additionalHeaders(): Headers = additionalHeaders
 
     fun _additionalQueryParams(): QueryParams = additionalQueryParams
-
-    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
 
     @JvmSynthetic internal fun getBody(): BetaVectorStoreFileCreateBody = body
 
@@ -61,8 +80,12 @@ constructor(
     class BetaVectorStoreFileCreateBody
     @JsonCreator
     internal constructor(
-        @JsonProperty("file_id") private val fileId: String,
-        @JsonProperty("chunking_strategy") private val chunkingStrategy: FileChunkingStrategyParam?,
+        @JsonProperty("file_id")
+        @ExcludeMissing
+        private val fileId: JsonField<String> = JsonMissing.of(),
+        @JsonProperty("chunking_strategy")
+        @ExcludeMissing
+        private val chunkingStrategy: JsonField<FileChunkingStrategyParam> = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
@@ -71,19 +94,42 @@ constructor(
          * A [File](https://platform.openai.com/docs/api-reference/files) ID that the vector store
          * should use. Useful for tools like `file_search` that can access files.
          */
-        @JsonProperty("file_id") fun fileId(): String = fileId
+        fun fileId(): String = fileId.getRequired("file_id")
+
+        /**
+         * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
+         * strategy. Only applicable if `file_ids` is non-empty.
+         */
+        fun chunkingStrategy(): Optional<FileChunkingStrategyParam> =
+            Optional.ofNullable(chunkingStrategy.getNullable("chunking_strategy"))
+
+        /**
+         * A [File](https://platform.openai.com/docs/api-reference/files) ID that the vector store
+         * should use. Useful for tools like `file_search` that can access files.
+         */
+        @JsonProperty("file_id") @ExcludeMissing fun _fileId(): JsonField<String> = fileId
 
         /**
          * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
          * strategy. Only applicable if `file_ids` is non-empty.
          */
         @JsonProperty("chunking_strategy")
-        fun chunkingStrategy(): Optional<FileChunkingStrategyParam> =
-            Optional.ofNullable(chunkingStrategy)
+        @ExcludeMissing
+        fun _chunkingStrategy(): JsonField<FileChunkingStrategyParam> = chunkingStrategy
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): BetaVectorStoreFileCreateBody = apply {
+            if (!validated) {
+                fileId()
+                chunkingStrategy()
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -94,8 +140,8 @@ constructor(
 
         class Builder {
 
-            private var fileId: String? = null
-            private var chunkingStrategy: FileChunkingStrategyParam? = null
+            private var fileId: JsonField<String>? = null
+            private var chunkingStrategy: JsonField<FileChunkingStrategyParam> = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -111,13 +157,26 @@ constructor(
              * A [File](https://platform.openai.com/docs/api-reference/files) ID that the vector
              * store should use. Useful for tools like `file_search` that can access files.
              */
-            fun fileId(fileId: String) = apply { this.fileId = fileId }
+            fun fileId(fileId: String) = fileId(JsonField.of(fileId))
+
+            /**
+             * A [File](https://platform.openai.com/docs/api-reference/files) ID that the vector
+             * store should use. Useful for tools like `file_search` that can access files.
+             */
+            fun fileId(fileId: JsonField<String>) = apply { this.fileId = fileId }
 
             /**
              * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
              * strategy. Only applicable if `file_ids` is non-empty.
              */
-            fun chunkingStrategy(chunkingStrategy: FileChunkingStrategyParam) = apply {
+            fun chunkingStrategy(chunkingStrategy: FileChunkingStrategyParam) =
+                chunkingStrategy(JsonField.of(chunkingStrategy))
+
+            /**
+             * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
+             * strategy. Only applicable if `file_ids` is non-empty.
+             */
+            fun chunkingStrategy(chunkingStrategy: JsonField<FileChunkingStrategyParam>) = apply {
                 this.chunkingStrategy = chunkingStrategy
             }
 
@@ -126,20 +185,22 @@ constructor(
              * and `chunk_overlap_tokens` of `400`.
              */
             fun chunkingStrategy(autoFileChunkingStrategyParam: AutoFileChunkingStrategyParam) =
-                apply {
-                    this.chunkingStrategy =
-                        FileChunkingStrategyParam.ofAutoFileChunkingStrategyParam(
-                            autoFileChunkingStrategyParam
-                        )
-                }
+                chunkingStrategy(
+                    FileChunkingStrategyParam.ofAutoFileChunkingStrategyParam(
+                        autoFileChunkingStrategyParam
+                    )
+                )
 
+            /**
+             * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
+             * strategy. Only applicable if `file_ids` is non-empty.
+             */
             fun chunkingStrategy(staticFileChunkingStrategyParam: StaticFileChunkingStrategyParam) =
-                apply {
-                    this.chunkingStrategy =
-                        FileChunkingStrategyParam.ofStaticFileChunkingStrategyParam(
-                            staticFileChunkingStrategyParam
-                        )
-                }
+                chunkingStrategy(
+                    FileChunkingStrategyParam.ofStaticFileChunkingStrategyParam(
+                        staticFileChunkingStrategyParam
+                    )
+                )
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
@@ -221,10 +282,24 @@ constructor(
         fun fileId(fileId: String) = apply { body.fileId(fileId) }
 
         /**
+         * A [File](https://platform.openai.com/docs/api-reference/files) ID that the vector store
+         * should use. Useful for tools like `file_search` that can access files.
+         */
+        fun fileId(fileId: JsonField<String>) = apply { body.fileId(fileId) }
+
+        /**
          * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
          * strategy. Only applicable if `file_ids` is non-empty.
          */
         fun chunkingStrategy(chunkingStrategy: FileChunkingStrategyParam) = apply {
+            body.chunkingStrategy(chunkingStrategy)
+        }
+
+        /**
+         * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
+         * strategy. Only applicable if `file_ids` is non-empty.
+         */
+        fun chunkingStrategy(chunkingStrategy: JsonField<FileChunkingStrategyParam>) = apply {
             body.chunkingStrategy(chunkingStrategy)
         }
 
@@ -236,10 +311,33 @@ constructor(
             body.chunkingStrategy(autoFileChunkingStrategyParam)
         }
 
+        /**
+         * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
+         * strategy. Only applicable if `file_ids` is non-empty.
+         */
         fun chunkingStrategy(staticFileChunkingStrategyParam: StaticFileChunkingStrategyParam) =
             apply {
                 body.chunkingStrategy(staticFileChunkingStrategyParam)
             }
+
+        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
+            body.additionalProperties(additionalBodyProperties)
+        }
+
+        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
+            body.putAdditionalProperty(key, value)
+        }
+
+        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
+            apply {
+                body.putAllAdditionalProperties(additionalBodyProperties)
+            }
+
+        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
+
+        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
+            body.removeAllAdditionalProperties(keys)
+        }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -337,25 +435,6 @@ constructor(
 
         fun removeAllAdditionalQueryParams(keys: Set<String>) = apply {
             additionalQueryParams.removeAll(keys)
-        }
-
-        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
-            body.additionalProperties(additionalBodyProperties)
-        }
-
-        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
-            body.putAdditionalProperty(key, value)
-        }
-
-        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
-            apply {
-                body.putAllAdditionalProperties(additionalBodyProperties)
-            }
-
-        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
-
-        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
-            body.removeAllAdditionalProperties(keys)
         }
 
         fun build(): BetaVectorStoreFileCreateParams =

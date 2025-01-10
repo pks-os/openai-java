@@ -55,6 +55,7 @@ private constructor(
      */
     fun threadRunStepCreated(): Optional<ThreadRunStepCreated> =
         Optional.ofNullable(threadRunStepCreated)
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) moves to an
@@ -62,12 +63,14 @@ private constructor(
      */
     fun threadRunStepInProgress(): Optional<ThreadRunStepInProgress> =
         Optional.ofNullable(threadRunStepInProgress)
+
     /**
      * Occurs when parts of a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) are being
      * streamed.
      */
     fun threadRunStepDelta(): Optional<ThreadRunStepDelta> = Optional.ofNullable(threadRunStepDelta)
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) is
@@ -75,12 +78,14 @@ private constructor(
      */
     fun threadRunStepCompleted(): Optional<ThreadRunStepCompleted> =
         Optional.ofNullable(threadRunStepCompleted)
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) fails.
      */
     fun threadRunStepFailed(): Optional<ThreadRunStepFailed> =
         Optional.ofNullable(threadRunStepFailed)
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) is
@@ -88,6 +93,7 @@ private constructor(
      */
     fun threadRunStepCancelled(): Optional<ThreadRunStepCancelled> =
         Optional.ofNullable(threadRunStepCancelled)
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) expires.
@@ -115,6 +121,7 @@ private constructor(
      */
     fun asThreadRunStepCreated(): ThreadRunStepCreated =
         threadRunStepCreated.getOrThrow("threadRunStepCreated")
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) moves to an
@@ -122,6 +129,7 @@ private constructor(
      */
     fun asThreadRunStepInProgress(): ThreadRunStepInProgress =
         threadRunStepInProgress.getOrThrow("threadRunStepInProgress")
+
     /**
      * Occurs when parts of a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) are being
@@ -129,6 +137,7 @@ private constructor(
      */
     fun asThreadRunStepDelta(): ThreadRunStepDelta =
         threadRunStepDelta.getOrThrow("threadRunStepDelta")
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) is
@@ -136,12 +145,14 @@ private constructor(
      */
     fun asThreadRunStepCompleted(): ThreadRunStepCompleted =
         threadRunStepCompleted.getOrThrow("threadRunStepCompleted")
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) fails.
      */
     fun asThreadRunStepFailed(): ThreadRunStepFailed =
         threadRunStepFailed.getOrThrow("threadRunStepFailed")
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) is
@@ -149,6 +160,7 @@ private constructor(
      */
     fun asThreadRunStepCancelled(): ThreadRunStepCancelled =
         threadRunStepCancelled.getOrThrow("threadRunStepCancelled")
+
     /**
      * Occurs when a
      * [run step](https://platform.openai.com/docs/api-reference/run-steps/step-object) expires.
@@ -421,9 +433,9 @@ private constructor(
         fun event(): Event = event.getRequired("event")
 
         /** Represents a step in execution of a run. */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<RunStep> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -448,8 +460,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<RunStep> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<RunStep>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -490,8 +502,8 @@ private constructor(
 
             fun build(): ThreadRunStepCreated =
                 ThreadRunStepCreated(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -590,9 +602,9 @@ private constructor(
         fun event(): Event = event.getRequired("event")
 
         /** Represents a step in execution of a run. */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<RunStep> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -617,8 +629,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<RunStep> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<RunStep>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -659,8 +671,8 @@ private constructor(
 
             fun build(): ThreadRunStepInProgress =
                 ThreadRunStepInProgress(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -759,9 +771,9 @@ private constructor(
         fun event(): Event = event.getRequired("event")
 
         /** Represents a run step delta i.e. any changed fields on a run step during streaming. */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<RunStepDeltaEvent> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -786,8 +798,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<RunStepDeltaEvent> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<RunStepDeltaEvent>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -832,8 +844,8 @@ private constructor(
 
             fun build(): ThreadRunStepDelta =
                 ThreadRunStepDelta(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -932,9 +944,9 @@ private constructor(
         fun event(): Event = event.getRequired("event")
 
         /** Represents a step in execution of a run. */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<RunStep> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -959,8 +971,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<RunStep> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<RunStep>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1001,8 +1013,8 @@ private constructor(
 
             fun build(): ThreadRunStepCompleted =
                 ThreadRunStepCompleted(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1100,9 +1112,9 @@ private constructor(
         fun event(): Event = event.getRequired("event")
 
         /** Represents a step in execution of a run. */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<RunStep> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1127,8 +1139,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<RunStep> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<RunStep>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1169,8 +1181,8 @@ private constructor(
 
             fun build(): ThreadRunStepFailed =
                 ThreadRunStepFailed(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1269,9 +1281,9 @@ private constructor(
         fun event(): Event = event.getRequired("event")
 
         /** Represents a step in execution of a run. */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<RunStep> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1296,8 +1308,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<RunStep> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<RunStep>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1338,8 +1350,8 @@ private constructor(
 
             fun build(): ThreadRunStepCancelled =
                 ThreadRunStepCancelled(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }
@@ -1437,9 +1449,9 @@ private constructor(
         fun event(): Event = event.getRequired("event")
 
         /** Represents a step in execution of a run. */
-        @JsonProperty("data") @ExcludeMissing fun _data() = data
+        @JsonProperty("data") @ExcludeMissing fun _data(): JsonField<RunStep> = data
 
-        @JsonProperty("event") @ExcludeMissing fun _event() = event
+        @JsonProperty("event") @ExcludeMissing fun _event(): JsonField<Event> = event
 
         @JsonAnyGetter
         @ExcludeMissing
@@ -1464,8 +1476,8 @@ private constructor(
 
         class Builder {
 
-            private var data: JsonField<RunStep> = JsonMissing.of()
-            private var event: JsonField<Event> = JsonMissing.of()
+            private var data: JsonField<RunStep>? = null
+            private var event: JsonField<Event>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1506,8 +1518,8 @@ private constructor(
 
             fun build(): ThreadRunStepExpired =
                 ThreadRunStepExpired(
-                    data,
-                    event,
+                    checkNotNull(data) { "`data` is required but was not set" },
+                    checkNotNull(event) { "`event` is required but was not set" },
                     additionalProperties.toImmutable(),
                 )
         }

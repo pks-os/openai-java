@@ -38,10 +38,12 @@ private constructor(
     fun role(): Optional<Role> = Optional.ofNullable(role.getNullable("role"))
 
     /** The content of the message in array of text and/or images. */
-    @JsonProperty("content") @ExcludeMissing fun _content() = content
+    @JsonProperty("content")
+    @ExcludeMissing
+    fun _content(): JsonField<List<MessageContentDelta>> = content
 
     /** The entity that produced the message. One of `user` or `assistant`. */
-    @JsonProperty("role") @ExcludeMissing fun _role() = role
+    @JsonProperty("role") @ExcludeMissing fun _role(): JsonField<Role> = role
 
     @JsonAnyGetter
     @ExcludeMissing
@@ -66,13 +68,13 @@ private constructor(
 
     class Builder {
 
-        private var content: JsonField<List<MessageContentDelta>> = JsonMissing.of()
+        private var content: JsonField<MutableList<MessageContentDelta>>? = null
         private var role: JsonField<Role> = JsonMissing.of()
         private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
         @JvmSynthetic
         internal fun from(messageDelta: MessageDelta) = apply {
-            content = messageDelta.content
+            content = messageDelta.content.map { it.toMutableList() }
             role = messageDelta.role
             additionalProperties = messageDelta.additionalProperties.toMutableMap()
         }
@@ -82,8 +84,41 @@ private constructor(
 
         /** The content of the message in array of text and/or images. */
         fun content(content: JsonField<List<MessageContentDelta>>) = apply {
-            this.content = content
+            this.content = content.map { it.toMutableList() }
         }
+
+        /** The content of the message in array of text and/or images. */
+        fun addContent(content: MessageContentDelta) = apply {
+            this.content =
+                (this.content ?: JsonField.of(mutableListOf())).apply {
+                    asKnown()
+                        .orElseThrow {
+                            IllegalStateException(
+                                "Field was set to non-list type: ${javaClass.simpleName}"
+                            )
+                        }
+                        .add(content)
+                }
+        }
+
+        /**
+         * References an image [File](https://platform.openai.com/docs/api-reference/files) in the
+         * content of a message.
+         */
+        fun addContent(imageFileDeltaBlock: ImageFileDeltaBlock) =
+            addContent(MessageContentDelta.ofImageFileDeltaBlock(imageFileDeltaBlock))
+
+        /** The text content that is part of a message. */
+        fun addContent(textDeltaBlock: TextDeltaBlock) =
+            addContent(MessageContentDelta.ofTextDeltaBlock(textDeltaBlock))
+
+        /** The refusal content that is part of a message. */
+        fun addContent(refusalDeltaBlock: RefusalDeltaBlock) =
+            addContent(MessageContentDelta.ofRefusalDeltaBlock(refusalDeltaBlock))
+
+        /** References an image URL in the content of a message. */
+        fun addContent(imageUrlDeltaBlock: ImageUrlDeltaBlock) =
+            addContent(MessageContentDelta.ofImageUrlDeltaBlock(imageUrlDeltaBlock))
 
         /** The entity that produced the message. One of `user` or `assistant`. */
         fun role(role: Role) = role(JsonField.of(role))
@@ -112,7 +147,7 @@ private constructor(
 
         fun build(): MessageDelta =
             MessageDelta(
-                content.map { it.toImmutable() },
+                (content ?: JsonMissing.of()).map { it.toImmutable() },
                 role,
                 additionalProperties.toImmutable(),
             )

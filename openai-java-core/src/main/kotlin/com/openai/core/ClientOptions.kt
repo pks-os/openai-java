@@ -14,6 +14,7 @@ import com.openai.core.http.RetryingHttpClient
 import com.openai.credential.BearerTokenCredential
 import com.openai.credential.Credential
 import java.time.Clock
+import java.util.Optional
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
@@ -90,6 +91,30 @@ private constructor(
         fun clock(clock: Clock) = apply { this.clock = clock }
 
         fun baseUrl(baseUrl: String) = apply { this.baseUrl = baseUrl }
+
+        fun responseValidation(responseValidation: Boolean) = apply {
+            this.responseValidation = responseValidation
+        }
+
+        fun maxRetries(maxRetries: Int) = apply { this.maxRetries = maxRetries }
+
+        fun apiKey(apiKey: String) = apply {
+            this.credential = BearerTokenCredential.create(apiKey)
+        }
+
+        fun credential(credential: Credential) = apply { this.credential = credential }
+
+        fun azureServiceVersion(azureServiceVersion: AzureOpenAIServiceVersion) = apply {
+            this.azureServiceVersion = azureServiceVersion
+        }
+
+        fun organization(organization: String?) = apply { this.organization = organization }
+
+        fun organization(organization: Optional<String>) = organization(organization.orElse(null))
+
+        fun project(project: String?) = apply { this.project = project }
+
+        fun project(project: Optional<String>) = project(project.orElse(null))
 
         fun headers(headers: Headers) = apply {
             this.headers.clear()
@@ -170,26 +195,6 @@ private constructor(
         fun removeQueryParams(key: String) = apply { queryParams.remove(key) }
 
         fun removeAllQueryParams(keys: Set<String>) = apply { queryParams.removeAll(keys) }
-
-        fun responseValidation(responseValidation: Boolean) = apply {
-            this.responseValidation = responseValidation
-        }
-
-        fun maxRetries(maxRetries: Int) = apply { this.maxRetries = maxRetries }
-
-        fun apiKey(apiKey: String) = apply {
-            this.credential = BearerTokenCredential.create(apiKey)
-        }
-
-        fun credential(credential: Credential) = apply { this.credential = credential }
-
-        fun azureServiceVersion(azureServiceVersion: AzureOpenAIServiceVersion) = apply {
-            this.azureServiceVersion = azureServiceVersion
-        }
-
-        fun organization(organization: String) = apply { this.organization = organization }
-
-        fun project(project: String) = apply { this.project = project }
 
         fun fromEnv() = apply {
             val openAIKey = System.getenv("OPENAI_API_KEY")

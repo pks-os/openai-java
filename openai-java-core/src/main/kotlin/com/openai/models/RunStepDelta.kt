@@ -44,7 +44,9 @@ private constructor(
         Optional.ofNullable(stepDetails.getNullable("step_details"))
 
     /** The details of the run step. */
-    @JsonProperty("step_details") @ExcludeMissing fun _stepDetails() = stepDetails
+    @JsonProperty("step_details")
+    @ExcludeMissing
+    fun _stepDetails(): JsonField<StepDetails> = stepDetails
 
     @JsonAnyGetter
     @ExcludeMissing
@@ -85,6 +87,14 @@ private constructor(
             this.stepDetails = stepDetails
         }
 
+        /** Details of the message creation by the run step. */
+        fun stepDetails(runStepDeltaMessageDelta: RunStepDeltaMessageDelta) =
+            stepDetails(StepDetails.ofRunStepDeltaMessageDelta(runStepDeltaMessageDelta))
+
+        /** Details of the tool call. */
+        fun stepDetails(toolCallDeltaObject: ToolCallDeltaObject) =
+            stepDetails(StepDetails.ofToolCallDeltaObject(toolCallDeltaObject))
+
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
             putAllAdditionalProperties(additionalProperties)
@@ -122,6 +132,7 @@ private constructor(
         /** Details of the message creation by the run step. */
         fun runStepDeltaMessageDelta(): Optional<RunStepDeltaMessageDelta> =
             Optional.ofNullable(runStepDeltaMessageDelta)
+
         /** Details of the tool call. */
         fun toolCallDeltaObject(): Optional<ToolCallDeltaObject> =
             Optional.ofNullable(toolCallDeltaObject)
@@ -133,6 +144,7 @@ private constructor(
         /** Details of the message creation by the run step. */
         fun asRunStepDeltaMessageDelta(): RunStepDeltaMessageDelta =
             runStepDeltaMessageDelta.getOrThrow("runStepDeltaMessageDelta")
+
         /** Details of the tool call. */
         fun asToolCallDeltaObject(): ToolCallDeltaObject =
             toolCallDeltaObject.getOrThrow("toolCallDeltaObject")

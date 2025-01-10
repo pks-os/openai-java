@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.11.1 (2025-01-09)
+
+Full Changelog: [v0.11.0...v0.11.1](https://github.com/openai/openai-java/compare/v0.11.0...v0.11.1)
+
+### Chores
+
+* **internal:** add some missing newlines between methods ([#100](https://github.com/openai/openai-java/issues/100)) ([afc2998](https://github.com/openai/openai-java/commit/afc2998ac124a26fe3ec92207f5ff4c9614ff673))
+* **internal:** spec update ([#97](https://github.com/openai/openai-java/issues/97)) ([0cff792](https://github.com/openai/openai-java/commit/0cff79271c63be46f5502a138ce1ad67a146724f))
+
+
+### Documentation
+
+* update some builder method javadocs ([#99](https://github.com/openai/openai-java/issues/99)) ([192965a](https://github.com/openai/openai-java/commit/192965abf73b9868d808c407bfc9fb73a507def7))
+
+## 0.11.0 (2025-01-08)
+
+Full Changelog: [v0.10.0...v0.11.0](https://github.com/openai/openai-java/compare/v0.10.0...v0.11.0)
+
+### Features
+
+* **client:** add more builder convenience methods for lists ([#96](https://github.com/openai/openai-java/issues/96)) ([9ee703b](https://github.com/openai/openai-java/commit/9ee703b13e8c467a71e7787d420a131bc1910e4f))
+
+
+### Documentation
+
+* **readme:** fix misplaced period ([#94](https://github.com/openai/openai-java/issues/94)) ([c6242ba](https://github.com/openai/openai-java/commit/c6242bad2b917fb419d9a69ad65cebbda9b56b51))
+
+## 0.10.0 (2025-01-08)
+
+Full Changelog: [v0.9.1...v0.10.0](https://github.com/openai/openai-java/compare/v0.9.1...v0.10.0)
+
+### Features
+
+* **client:** add various convenience setters to models ([#91](https://github.com/openai/openai-java/issues/91)) ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+* **client:** allow passing null or optional for nullable fields ([#84](https://github.com/openai/openai-java/issues/84)) ([8a8f2f9](https://github.com/openai/openai-java/commit/8a8f2f9ac5f6555c372a81acc196b3ab04fd9555))
+* **client:** allow setting arbitrary JSON for top-level body params ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+* **client:** expose getters for `JsonField` of body params ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+
+
+### Bug Fixes
+
+* **client:** consistently throw on omitting required fields ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+* **client:** convert `JsonField` containing list type to mutable in builder ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+
+
+### Documentation
+
+* add params class javadocs ([#90](https://github.com/openai/openai-java/issues/90)) ([9a33c1c](https://github.com/openai/openai-java/commit/9a33c1cf22e30e1878d739acfab4258321c6a9f8))
+
+
+### Styles
+
+* **internal:** explicitly add some method return types ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+* **internal:** move headers and query params setters below others ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+* **internal:** simplify existing convenience setters on params ([9b3eb17](https://github.com/openai/openai-java/commit/9b3eb17270075587ac9c2701b0e41a7debf17bec))
+
 ## 0.9.1 (2025-01-06)
 
 Full Changelog: [v0.9.0...v0.9.1](https://github.com/openai/openai-java/compare/v0.9.0...v0.9.1)

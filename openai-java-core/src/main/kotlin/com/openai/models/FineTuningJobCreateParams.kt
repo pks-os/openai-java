@@ -18,6 +18,7 @@ import com.openai.core.BaseSerializer
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
+import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.getOrThrow
@@ -29,6 +30,14 @@ import com.openai.errors.OpenAIInvalidDataException
 import java.util.Objects
 import java.util.Optional
 
+/**
+ * Creates a fine-tuning job which begins the process of creating a new model from a given dataset.
+ *
+ * Response includes details of the enqueued job including job status and the name of the fine-tuned
+ * models once complete.
+ *
+ * [Learn more about fine-tuning](https://platform.openai.com/docs/guides/fine-tuning)
+ */
 class FineTuningJobCreateParams
 constructor(
     private val body: FineTuningJobCreateBody,
@@ -105,11 +114,80 @@ constructor(
      */
     fun validationFile(): Optional<String> = body.validationFile()
 
+    /**
+     * The name of the model to fine-tune. You can select one of the
+     * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
+     */
+    fun _model(): JsonField<Model> = body._model()
+
+    /**
+     * The ID of an uploaded file that contains training data.
+     *
+     * See [upload file](https://platform.openai.com/docs/api-reference/files/create) for how to
+     * upload a file.
+     *
+     * Your dataset must be formatted as a JSONL file. Additionally, you must upload your file with
+     * the purpose `fine-tune`.
+     *
+     * The contents of the file should differ depending on if the model uses the
+     * [chat](https://platform.openai.com/docs/api-reference/fine-tuning/chat-input),
+     * [completions](https://platform.openai.com/docs/api-reference/fine-tuning/completions-input)
+     * format, or if the fine-tuning method uses the
+     * [preference](https://platform.openai.com/docs/api-reference/fine-tuning/preference-input)
+     * format.
+     *
+     * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
+     * details.
+     */
+    fun _trainingFile(): JsonField<String> = body._trainingFile()
+
+    /**
+     * The hyperparameters used for the fine-tuning job. This value is now deprecated in favor of
+     * `method`, and should be passed in under the `method` parameter.
+     */
+    fun _hyperparameters(): JsonField<Hyperparameters> = body._hyperparameters()
+
+    /** A list of integrations to enable for your fine-tuning job. */
+    fun _integrations(): JsonField<List<Integration>> = body._integrations()
+
+    /** The method used for fine-tuning. */
+    fun _method(): JsonField<Method> = body._method()
+
+    /**
+     * The seed controls the reproducibility of the job. Passing in the same seed and job parameters
+     * should produce the same results, but may differ in rare cases. If a seed is not specified,
+     * one will be generated for you.
+     */
+    fun _seed(): JsonField<Long> = body._seed()
+
+    /**
+     * A string of up to 64 characters that will be added to your fine-tuned model name.
+     *
+     * For example, a `suffix` of "custom-model-name" would produce a model name like
+     * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
+     */
+    fun _suffix(): JsonField<String> = body._suffix()
+
+    /**
+     * The ID of an uploaded file that contains validation data.
+     *
+     * If you provide this file, the data is used to generate validation metrics periodically during
+     * fine-tuning. These metrics can be viewed in the fine-tuning results file. The same data
+     * should not be present in both train and validation files.
+     *
+     * Your dataset must be formatted as a JSONL file. You must upload your file with the purpose
+     * `fine-tune`.
+     *
+     * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
+     * details.
+     */
+    fun _validationFile(): JsonField<String> = body._validationFile()
+
+    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
+
     fun _additionalHeaders(): Headers = additionalHeaders
 
     fun _additionalQueryParams(): QueryParams = additionalQueryParams
-
-    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
 
     @JvmSynthetic internal fun getBody(): FineTuningJobCreateBody = body
 
@@ -121,14 +199,28 @@ constructor(
     class FineTuningJobCreateBody
     @JsonCreator
     internal constructor(
-        @JsonProperty("model") private val model: Model,
-        @JsonProperty("training_file") private val trainingFile: String,
-        @JsonProperty("hyperparameters") private val hyperparameters: Hyperparameters?,
-        @JsonProperty("integrations") private val integrations: List<Integration>?,
-        @JsonProperty("method") private val method: Method?,
-        @JsonProperty("seed") private val seed: Long?,
-        @JsonProperty("suffix") private val suffix: String?,
-        @JsonProperty("validation_file") private val validationFile: String?,
+        @JsonProperty("model")
+        @ExcludeMissing
+        private val model: JsonField<Model> = JsonMissing.of(),
+        @JsonProperty("training_file")
+        @ExcludeMissing
+        private val trainingFile: JsonField<String> = JsonMissing.of(),
+        @JsonProperty("hyperparameters")
+        @ExcludeMissing
+        private val hyperparameters: JsonField<Hyperparameters> = JsonMissing.of(),
+        @JsonProperty("integrations")
+        @ExcludeMissing
+        private val integrations: JsonField<List<Integration>> = JsonMissing.of(),
+        @JsonProperty("method")
+        @ExcludeMissing
+        private val method: JsonField<Method> = JsonMissing.of(),
+        @JsonProperty("seed") @ExcludeMissing private val seed: JsonField<Long> = JsonMissing.of(),
+        @JsonProperty("suffix")
+        @ExcludeMissing
+        private val suffix: JsonField<String> = JsonMissing.of(),
+        @JsonProperty("validation_file")
+        @ExcludeMissing
+        private val validationFile: JsonField<String> = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
@@ -137,7 +229,7 @@ constructor(
          * The name of the model to fine-tune. You can select one of the
          * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
          */
-        @JsonProperty("model") fun model(): Model = model
+        fun model(): Model = model.getRequired("model")
 
         /**
          * The ID of an uploaded file that contains training data.
@@ -158,28 +250,28 @@ constructor(
          * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
          * details.
          */
-        @JsonProperty("training_file") fun trainingFile(): String = trainingFile
+        fun trainingFile(): String = trainingFile.getRequired("training_file")
 
         /**
          * The hyperparameters used for the fine-tuning job. This value is now deprecated in favor
          * of `method`, and should be passed in under the `method` parameter.
          */
-        @JsonProperty("hyperparameters")
-        fun hyperparameters(): Optional<Hyperparameters> = Optional.ofNullable(hyperparameters)
+        fun hyperparameters(): Optional<Hyperparameters> =
+            Optional.ofNullable(hyperparameters.getNullable("hyperparameters"))
 
         /** A list of integrations to enable for your fine-tuning job. */
-        @JsonProperty("integrations")
-        fun integrations(): Optional<List<Integration>> = Optional.ofNullable(integrations)
+        fun integrations(): Optional<List<Integration>> =
+            Optional.ofNullable(integrations.getNullable("integrations"))
 
         /** The method used for fine-tuning. */
-        @JsonProperty("method") fun method(): Optional<Method> = Optional.ofNullable(method)
+        fun method(): Optional<Method> = Optional.ofNullable(method.getNullable("method"))
 
         /**
          * The seed controls the reproducibility of the job. Passing in the same seed and job
          * parameters should produce the same results, but may differ in rare cases. If a seed is
          * not specified, one will be generated for you.
          */
-        @JsonProperty("seed") fun seed(): Optional<Long> = Optional.ofNullable(seed)
+        fun seed(): Optional<Long> = Optional.ofNullable(seed.getNullable("seed"))
 
         /**
          * A string of up to 64 characters that will be added to your fine-tuned model name.
@@ -187,7 +279,83 @@ constructor(
          * For example, a `suffix` of "custom-model-name" would produce a model name like
          * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
          */
-        @JsonProperty("suffix") fun suffix(): Optional<String> = Optional.ofNullable(suffix)
+        fun suffix(): Optional<String> = Optional.ofNullable(suffix.getNullable("suffix"))
+
+        /**
+         * The ID of an uploaded file that contains validation data.
+         *
+         * If you provide this file, the data is used to generate validation metrics periodically
+         * during fine-tuning. These metrics can be viewed in the fine-tuning results file. The same
+         * data should not be present in both train and validation files.
+         *
+         * Your dataset must be formatted as a JSONL file. You must upload your file with the
+         * purpose `fine-tune`.
+         *
+         * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
+         * details.
+         */
+        fun validationFile(): Optional<String> =
+            Optional.ofNullable(validationFile.getNullable("validation_file"))
+
+        /**
+         * The name of the model to fine-tune. You can select one of the
+         * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
+         */
+        @JsonProperty("model") @ExcludeMissing fun _model(): JsonField<Model> = model
+
+        /**
+         * The ID of an uploaded file that contains training data.
+         *
+         * See [upload file](https://platform.openai.com/docs/api-reference/files/create) for how to
+         * upload a file.
+         *
+         * Your dataset must be formatted as a JSONL file. Additionally, you must upload your file
+         * with the purpose `fine-tune`.
+         *
+         * The contents of the file should differ depending on if the model uses the
+         * [chat](https://platform.openai.com/docs/api-reference/fine-tuning/chat-input),
+         * [completions](https://platform.openai.com/docs/api-reference/fine-tuning/completions-input)
+         * format, or if the fine-tuning method uses the
+         * [preference](https://platform.openai.com/docs/api-reference/fine-tuning/preference-input)
+         * format.
+         *
+         * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
+         * details.
+         */
+        @JsonProperty("training_file")
+        @ExcludeMissing
+        fun _trainingFile(): JsonField<String> = trainingFile
+
+        /**
+         * The hyperparameters used for the fine-tuning job. This value is now deprecated in favor
+         * of `method`, and should be passed in under the `method` parameter.
+         */
+        @JsonProperty("hyperparameters")
+        @ExcludeMissing
+        fun _hyperparameters(): JsonField<Hyperparameters> = hyperparameters
+
+        /** A list of integrations to enable for your fine-tuning job. */
+        @JsonProperty("integrations")
+        @ExcludeMissing
+        fun _integrations(): JsonField<List<Integration>> = integrations
+
+        /** The method used for fine-tuning. */
+        @JsonProperty("method") @ExcludeMissing fun _method(): JsonField<Method> = method
+
+        /**
+         * The seed controls the reproducibility of the job. Passing in the same seed and job
+         * parameters should produce the same results, but may differ in rare cases. If a seed is
+         * not specified, one will be generated for you.
+         */
+        @JsonProperty("seed") @ExcludeMissing fun _seed(): JsonField<Long> = seed
+
+        /**
+         * A string of up to 64 characters that will be added to your fine-tuned model name.
+         *
+         * For example, a `suffix` of "custom-model-name" would produce a model name like
+         * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
+         */
+        @JsonProperty("suffix") @ExcludeMissing fun _suffix(): JsonField<String> = suffix
 
         /**
          * The ID of an uploaded file that contains validation data.
@@ -203,11 +371,28 @@ constructor(
          * details.
          */
         @JsonProperty("validation_file")
-        fun validationFile(): Optional<String> = Optional.ofNullable(validationFile)
+        @ExcludeMissing
+        fun _validationFile(): JsonField<String> = validationFile
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): FineTuningJobCreateBody = apply {
+            if (!validated) {
+                model()
+                trainingFile()
+                hyperparameters().map { it.validate() }
+                integrations().map { it.forEach { it.validate() } }
+                method().map { it.validate() }
+                seed()
+                suffix()
+                validationFile()
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -218,14 +403,14 @@ constructor(
 
         class Builder {
 
-            private var model: Model? = null
-            private var trainingFile: String? = null
-            private var hyperparameters: Hyperparameters? = null
-            private var integrations: MutableList<Integration>? = null
-            private var method: Method? = null
-            private var seed: Long? = null
-            private var suffix: String? = null
-            private var validationFile: String? = null
+            private var model: JsonField<Model>? = null
+            private var trainingFile: JsonField<String>? = null
+            private var hyperparameters: JsonField<Hyperparameters> = JsonMissing.of()
+            private var integrations: JsonField<MutableList<Integration>>? = null
+            private var method: JsonField<Method> = JsonMissing.of()
+            private var seed: JsonField<Long> = JsonMissing.of()
+            private var suffix: JsonField<String> = JsonMissing.of()
+            private var validationFile: JsonField<String> = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -233,7 +418,7 @@ constructor(
                 model = fineTuningJobCreateBody.model
                 trainingFile = fineTuningJobCreateBody.trainingFile
                 hyperparameters = fineTuningJobCreateBody.hyperparameters
-                integrations = fineTuningJobCreateBody.integrations?.toMutableList()
+                integrations = fineTuningJobCreateBody.integrations.map { it.toMutableList() }
                 method = fineTuningJobCreateBody.method
                 seed = fineTuningJobCreateBody.seed
                 suffix = fineTuningJobCreateBody.suffix
@@ -245,13 +430,19 @@ constructor(
              * The name of the model to fine-tune. You can select one of the
              * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
              */
-            fun model(model: Model) = apply { this.model = model }
+            fun model(model: Model) = model(JsonField.of(model))
 
             /**
              * The name of the model to fine-tune. You can select one of the
              * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
              */
-            fun model(value: String) = apply { model = Model.of(value) }
+            fun model(model: JsonField<Model>) = apply { this.model = model }
+
+            /**
+             * The name of the model to fine-tune. You can select one of the
+             * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
+             */
+            fun model(value: String) = apply { model(Model.of(value)) }
 
             /**
              * The ID of an uploaded file that contains training data.
@@ -272,35 +463,107 @@ constructor(
              * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for
              * more details.
              */
-            fun trainingFile(trainingFile: String) = apply { this.trainingFile = trainingFile }
+            fun trainingFile(trainingFile: String) = trainingFile(JsonField.of(trainingFile))
+
+            /**
+             * The ID of an uploaded file that contains training data.
+             *
+             * See [upload file](https://platform.openai.com/docs/api-reference/files/create) for
+             * how to upload a file.
+             *
+             * Your dataset must be formatted as a JSONL file. Additionally, you must upload your
+             * file with the purpose `fine-tune`.
+             *
+             * The contents of the file should differ depending on if the model uses the
+             * [chat](https://platform.openai.com/docs/api-reference/fine-tuning/chat-input),
+             * [completions](https://platform.openai.com/docs/api-reference/fine-tuning/completions-input)
+             * format, or if the fine-tuning method uses the
+             * [preference](https://platform.openai.com/docs/api-reference/fine-tuning/preference-input)
+             * format.
+             *
+             * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for
+             * more details.
+             */
+            fun trainingFile(trainingFile: JsonField<String>) = apply {
+                this.trainingFile = trainingFile
+            }
 
             /**
              * The hyperparameters used for the fine-tuning job. This value is now deprecated in
              * favor of `method`, and should be passed in under the `method` parameter.
              */
-            fun hyperparameters(hyperparameters: Hyperparameters) = apply {
+            fun hyperparameters(hyperparameters: Hyperparameters) =
+                hyperparameters(JsonField.of(hyperparameters))
+
+            /**
+             * The hyperparameters used for the fine-tuning job. This value is now deprecated in
+             * favor of `method`, and should be passed in under the `method` parameter.
+             */
+            fun hyperparameters(hyperparameters: JsonField<Hyperparameters>) = apply {
                 this.hyperparameters = hyperparameters
             }
 
             /** A list of integrations to enable for your fine-tuning job. */
-            fun integrations(integrations: List<Integration>) = apply {
-                this.integrations = integrations.toMutableList()
+            fun integrations(integrations: List<Integration>?) =
+                integrations(JsonField.ofNullable(integrations))
+
+            /** A list of integrations to enable for your fine-tuning job. */
+            fun integrations(integrations: Optional<List<Integration>>) =
+                integrations(integrations.orElse(null))
+
+            /** A list of integrations to enable for your fine-tuning job. */
+            fun integrations(integrations: JsonField<List<Integration>>) = apply {
+                this.integrations = integrations.map { it.toMutableList() }
             }
 
             /** A list of integrations to enable for your fine-tuning job. */
             fun addIntegration(integration: Integration) = apply {
-                integrations = (integrations ?: mutableListOf()).apply { add(integration) }
+                integrations =
+                    (integrations ?: JsonField.of(mutableListOf())).apply {
+                        asKnown()
+                            .orElseThrow {
+                                IllegalStateException(
+                                    "Field was set to non-list type: ${javaClass.simpleName}"
+                                )
+                            }
+                            .add(integration)
+                    }
             }
 
             /** The method used for fine-tuning. */
-            fun method(method: Method) = apply { this.method = method }
+            fun method(method: Method) = method(JsonField.of(method))
+
+            /** The method used for fine-tuning. */
+            fun method(method: JsonField<Method>) = apply { this.method = method }
 
             /**
              * The seed controls the reproducibility of the job. Passing in the same seed and job
              * parameters should produce the same results, but may differ in rare cases. If a seed
              * is not specified, one will be generated for you.
              */
-            fun seed(seed: Long) = apply { this.seed = seed }
+            fun seed(seed: Long?) = seed(JsonField.ofNullable(seed))
+
+            /**
+             * The seed controls the reproducibility of the job. Passing in the same seed and job
+             * parameters should produce the same results, but may differ in rare cases. If a seed
+             * is not specified, one will be generated for you.
+             */
+            fun seed(seed: Long) = seed(seed as Long?)
+
+            /**
+             * The seed controls the reproducibility of the job. Passing in the same seed and job
+             * parameters should produce the same results, but may differ in rare cases. If a seed
+             * is not specified, one will be generated for you.
+             */
+            @Suppress("USELESS_CAST") // See https://youtrack.jetbrains.com/issue/KT-74228
+            fun seed(seed: Optional<Long>) = seed(seed.orElse(null) as Long?)
+
+            /**
+             * The seed controls the reproducibility of the job. Passing in the same seed and job
+             * parameters should produce the same results, but may differ in rare cases. If a seed
+             * is not specified, one will be generated for you.
+             */
+            fun seed(seed: JsonField<Long>) = apply { this.seed = seed }
 
             /**
              * A string of up to 64 characters that will be added to your fine-tuned model name.
@@ -308,7 +571,23 @@ constructor(
              * For example, a `suffix` of "custom-model-name" would produce a model name like
              * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
              */
-            fun suffix(suffix: String) = apply { this.suffix = suffix }
+            fun suffix(suffix: String?) = suffix(JsonField.ofNullable(suffix))
+
+            /**
+             * A string of up to 64 characters that will be added to your fine-tuned model name.
+             *
+             * For example, a `suffix` of "custom-model-name" would produce a model name like
+             * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
+             */
+            fun suffix(suffix: Optional<String>) = suffix(suffix.orElse(null))
+
+            /**
+             * A string of up to 64 characters that will be added to your fine-tuned model name.
+             *
+             * For example, a `suffix` of "custom-model-name" would produce a model name like
+             * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
+             */
+            fun suffix(suffix: JsonField<String>) = apply { this.suffix = suffix }
 
             /**
              * The ID of an uploaded file that contains validation data.
@@ -323,7 +602,39 @@ constructor(
              * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for
              * more details.
              */
-            fun validationFile(validationFile: String) = apply {
+            fun validationFile(validationFile: String?) =
+                validationFile(JsonField.ofNullable(validationFile))
+
+            /**
+             * The ID of an uploaded file that contains validation data.
+             *
+             * If you provide this file, the data is used to generate validation metrics
+             * periodically during fine-tuning. These metrics can be viewed in the fine-tuning
+             * results file. The same data should not be present in both train and validation files.
+             *
+             * Your dataset must be formatted as a JSONL file. You must upload your file with the
+             * purpose `fine-tune`.
+             *
+             * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for
+             * more details.
+             */
+            fun validationFile(validationFile: Optional<String>) =
+                validationFile(validationFile.orElse(null))
+
+            /**
+             * The ID of an uploaded file that contains validation data.
+             *
+             * If you provide this file, the data is used to generate validation metrics
+             * periodically during fine-tuning. These metrics can be viewed in the fine-tuning
+             * results file. The same data should not be present in both train and validation files.
+             *
+             * Your dataset must be formatted as a JSONL file. You must upload your file with the
+             * purpose `fine-tune`.
+             *
+             * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for
+             * more details.
+             */
+            fun validationFile(validationFile: JsonField<String>) = apply {
                 this.validationFile = validationFile
             }
 
@@ -351,7 +662,7 @@ constructor(
                     checkNotNull(model) { "`model` is required but was not set" },
                     checkNotNull(trainingFile) { "`trainingFile` is required but was not set" },
                     hyperparameters,
-                    integrations?.toImmutable(),
+                    (integrations ?: JsonMissing.of()).map { it.toImmutable() },
                     method,
                     seed,
                     suffix,
@@ -409,6 +720,12 @@ constructor(
          * The name of the model to fine-tune. You can select one of the
          * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
          */
+        fun model(model: JsonField<Model>) = apply { body.model(model) }
+
+        /**
+         * The name of the model to fine-tune. You can select one of the
+         * [supported models](https://platform.openai.com/docs/guides/fine-tuning#which-models-can-be-fine-tuned).
+         */
         fun model(value: String) = apply { body.model(value) }
 
         /**
@@ -433,6 +750,29 @@ constructor(
         fun trainingFile(trainingFile: String) = apply { body.trainingFile(trainingFile) }
 
         /**
+         * The ID of an uploaded file that contains training data.
+         *
+         * See [upload file](https://platform.openai.com/docs/api-reference/files/create) for how to
+         * upload a file.
+         *
+         * Your dataset must be formatted as a JSONL file. Additionally, you must upload your file
+         * with the purpose `fine-tune`.
+         *
+         * The contents of the file should differ depending on if the model uses the
+         * [chat](https://platform.openai.com/docs/api-reference/fine-tuning/chat-input),
+         * [completions](https://platform.openai.com/docs/api-reference/fine-tuning/completions-input)
+         * format, or if the fine-tuning method uses the
+         * [preference](https://platform.openai.com/docs/api-reference/fine-tuning/preference-input)
+         * format.
+         *
+         * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
+         * details.
+         */
+        fun trainingFile(trainingFile: JsonField<String>) = apply {
+            body.trainingFile(trainingFile)
+        }
+
+        /**
          * The hyperparameters used for the fine-tuning job. This value is now deprecated in favor
          * of `method`, and should be passed in under the `method` parameter.
          */
@@ -440,8 +780,25 @@ constructor(
             body.hyperparameters(hyperparameters)
         }
 
+        /**
+         * The hyperparameters used for the fine-tuning job. This value is now deprecated in favor
+         * of `method`, and should be passed in under the `method` parameter.
+         */
+        fun hyperparameters(hyperparameters: JsonField<Hyperparameters>) = apply {
+            body.hyperparameters(hyperparameters)
+        }
+
         /** A list of integrations to enable for your fine-tuning job. */
-        fun integrations(integrations: List<Integration>) = apply {
+        fun integrations(integrations: List<Integration>?) = apply {
+            body.integrations(integrations)
+        }
+
+        /** A list of integrations to enable for your fine-tuning job. */
+        fun integrations(integrations: Optional<List<Integration>>) =
+            integrations(integrations.orElse(null))
+
+        /** A list of integrations to enable for your fine-tuning job. */
+        fun integrations(integrations: JsonField<List<Integration>>) = apply {
             body.integrations(integrations)
         }
 
@@ -451,12 +808,37 @@ constructor(
         /** The method used for fine-tuning. */
         fun method(method: Method) = apply { body.method(method) }
 
+        /** The method used for fine-tuning. */
+        fun method(method: JsonField<Method>) = apply { body.method(method) }
+
         /**
          * The seed controls the reproducibility of the job. Passing in the same seed and job
          * parameters should produce the same results, but may differ in rare cases. If a seed is
          * not specified, one will be generated for you.
          */
-        fun seed(seed: Long) = apply { body.seed(seed) }
+        fun seed(seed: Long?) = apply { body.seed(seed) }
+
+        /**
+         * The seed controls the reproducibility of the job. Passing in the same seed and job
+         * parameters should produce the same results, but may differ in rare cases. If a seed is
+         * not specified, one will be generated for you.
+         */
+        fun seed(seed: Long) = seed(seed as Long?)
+
+        /**
+         * The seed controls the reproducibility of the job. Passing in the same seed and job
+         * parameters should produce the same results, but may differ in rare cases. If a seed is
+         * not specified, one will be generated for you.
+         */
+        @Suppress("USELESS_CAST") // See https://youtrack.jetbrains.com/issue/KT-74228
+        fun seed(seed: Optional<Long>) = seed(seed.orElse(null) as Long?)
+
+        /**
+         * The seed controls the reproducibility of the job. Passing in the same seed and job
+         * parameters should produce the same results, but may differ in rare cases. If a seed is
+         * not specified, one will be generated for you.
+         */
+        fun seed(seed: JsonField<Long>) = apply { body.seed(seed) }
 
         /**
          * A string of up to 64 characters that will be added to your fine-tuned model name.
@@ -464,7 +846,23 @@ constructor(
          * For example, a `suffix` of "custom-model-name" would produce a model name like
          * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
          */
-        fun suffix(suffix: String) = apply { body.suffix(suffix) }
+        fun suffix(suffix: String?) = apply { body.suffix(suffix) }
+
+        /**
+         * A string of up to 64 characters that will be added to your fine-tuned model name.
+         *
+         * For example, a `suffix` of "custom-model-name" would produce a model name like
+         * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
+         */
+        fun suffix(suffix: Optional<String>) = suffix(suffix.orElse(null))
+
+        /**
+         * A string of up to 64 characters that will be added to your fine-tuned model name.
+         *
+         * For example, a `suffix` of "custom-model-name" would produce a model name like
+         * `ft:gpt-4o-mini:openai:custom-model-name:7p4lURel`.
+         */
+        fun suffix(suffix: JsonField<String>) = apply { body.suffix(suffix) }
 
         /**
          * The ID of an uploaded file that contains validation data.
@@ -479,7 +877,59 @@ constructor(
          * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
          * details.
          */
-        fun validationFile(validationFile: String) = apply { body.validationFile(validationFile) }
+        fun validationFile(validationFile: String?) = apply { body.validationFile(validationFile) }
+
+        /**
+         * The ID of an uploaded file that contains validation data.
+         *
+         * If you provide this file, the data is used to generate validation metrics periodically
+         * during fine-tuning. These metrics can be viewed in the fine-tuning results file. The same
+         * data should not be present in both train and validation files.
+         *
+         * Your dataset must be formatted as a JSONL file. You must upload your file with the
+         * purpose `fine-tune`.
+         *
+         * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
+         * details.
+         */
+        fun validationFile(validationFile: Optional<String>) =
+            validationFile(validationFile.orElse(null))
+
+        /**
+         * The ID of an uploaded file that contains validation data.
+         *
+         * If you provide this file, the data is used to generate validation metrics periodically
+         * during fine-tuning. These metrics can be viewed in the fine-tuning results file. The same
+         * data should not be present in both train and validation files.
+         *
+         * Your dataset must be formatted as a JSONL file. You must upload your file with the
+         * purpose `fine-tune`.
+         *
+         * See the [fine-tuning guide](https://platform.openai.com/docs/guides/fine-tuning) for more
+         * details.
+         */
+        fun validationFile(validationFile: JsonField<String>) = apply {
+            body.validationFile(validationFile)
+        }
+
+        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
+            body.additionalProperties(additionalBodyProperties)
+        }
+
+        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
+            body.putAdditionalProperty(key, value)
+        }
+
+        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
+            apply {
+                body.putAllAdditionalProperties(additionalBodyProperties)
+            }
+
+        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
+
+        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
+            body.removeAllAdditionalProperties(keys)
+        }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -579,25 +1029,6 @@ constructor(
             additionalQueryParams.removeAll(keys)
         }
 
-        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
-            body.additionalProperties(additionalBodyProperties)
-        }
-
-        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
-            body.putAdditionalProperty(key, value)
-        }
-
-        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
-            apply {
-                body.putAllAdditionalProperties(additionalBodyProperties)
-            }
-
-        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
-
-        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
-            body.removeAllAdditionalProperties(keys)
-        }
-
         fun build(): FineTuningJobCreateParams =
             FineTuningJobCreateParams(
                 body.build(),
@@ -683,10 +1114,15 @@ constructor(
     class Hyperparameters
     @JsonCreator
     private constructor(
-        @JsonProperty("batch_size") private val batchSize: BatchSize?,
+        @JsonProperty("batch_size")
+        @ExcludeMissing
+        private val batchSize: JsonField<BatchSize> = JsonMissing.of(),
         @JsonProperty("learning_rate_multiplier")
-        private val learningRateMultiplier: LearningRateMultiplier?,
-        @JsonProperty("n_epochs") private val nEpochs: NEpochs?,
+        @ExcludeMissing
+        private val learningRateMultiplier: JsonField<LearningRateMultiplier> = JsonMissing.of(),
+        @JsonProperty("n_epochs")
+        @ExcludeMissing
+        private val nEpochs: JsonField<NEpochs> = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
@@ -695,26 +1131,58 @@ constructor(
          * Number of examples in each batch. A larger batch size means that model parameters are
          * updated less frequently, but with lower variance.
          */
+        fun batchSize(): Optional<BatchSize> =
+            Optional.ofNullable(batchSize.getNullable("batch_size"))
+
+        /**
+         * Scaling factor for the learning rate. A smaller learning rate may be useful to avoid
+         * overfitting.
+         */
+        fun learningRateMultiplier(): Optional<LearningRateMultiplier> =
+            Optional.ofNullable(learningRateMultiplier.getNullable("learning_rate_multiplier"))
+
+        /**
+         * The number of epochs to train the model for. An epoch refers to one full cycle through
+         * the training dataset.
+         */
+        fun nEpochs(): Optional<NEpochs> = Optional.ofNullable(nEpochs.getNullable("n_epochs"))
+
+        /**
+         * Number of examples in each batch. A larger batch size means that model parameters are
+         * updated less frequently, but with lower variance.
+         */
         @JsonProperty("batch_size")
-        fun batchSize(): Optional<BatchSize> = Optional.ofNullable(batchSize)
+        @ExcludeMissing
+        fun _batchSize(): JsonField<BatchSize> = batchSize
 
         /**
          * Scaling factor for the learning rate. A smaller learning rate may be useful to avoid
          * overfitting.
          */
         @JsonProperty("learning_rate_multiplier")
-        fun learningRateMultiplier(): Optional<LearningRateMultiplier> =
-            Optional.ofNullable(learningRateMultiplier)
+        @ExcludeMissing
+        fun _learningRateMultiplier(): JsonField<LearningRateMultiplier> = learningRateMultiplier
 
         /**
          * The number of epochs to train the model for. An epoch refers to one full cycle through
          * the training dataset.
          */
-        @JsonProperty("n_epochs") fun nEpochs(): Optional<NEpochs> = Optional.ofNullable(nEpochs)
+        @JsonProperty("n_epochs") @ExcludeMissing fun _nEpochs(): JsonField<NEpochs> = nEpochs
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): Hyperparameters = apply {
+            if (!validated) {
+                batchSize()
+                learningRateMultiplier()
+                nEpochs()
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -725,9 +1193,9 @@ constructor(
 
         class Builder {
 
-            private var batchSize: BatchSize? = null
-            private var learningRateMultiplier: LearningRateMultiplier? = null
-            private var nEpochs: NEpochs? = null
+            private var batchSize: JsonField<BatchSize> = JsonMissing.of()
+            private var learningRateMultiplier: JsonField<LearningRateMultiplier> = JsonMissing.of()
+            private var nEpochs: JsonField<NEpochs> = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -742,41 +1210,79 @@ constructor(
              * Number of examples in each batch. A larger batch size means that model parameters are
              * updated less frequently, but with lower variance.
              */
-            fun batchSize(batchSize: BatchSize) = apply { this.batchSize = batchSize }
+            fun batchSize(batchSize: BatchSize) = batchSize(JsonField.of(batchSize))
 
-            fun batchSize(behavior: BatchSize.Behavior) = apply {
-                this.batchSize = BatchSize.ofBehavior(behavior)
-            }
+            /**
+             * Number of examples in each batch. A larger batch size means that model parameters are
+             * updated less frequently, but with lower variance.
+             */
+            fun batchSize(batchSize: JsonField<BatchSize>) = apply { this.batchSize = batchSize }
 
-            fun batchSize(integer: Long) = apply { this.batchSize = BatchSize.ofInteger(integer) }
+            /**
+             * Number of examples in each batch. A larger batch size means that model parameters are
+             * updated less frequently, but with lower variance.
+             */
+            fun batchSize(behavior: BatchSize.Behavior) = batchSize(BatchSize.ofBehavior(behavior))
+
+            /**
+             * Number of examples in each batch. A larger batch size means that model parameters are
+             * updated less frequently, but with lower variance.
+             */
+            fun batchSize(integer: Long) = batchSize(BatchSize.ofInteger(integer))
 
             /**
              * Scaling factor for the learning rate. A smaller learning rate may be useful to avoid
              * overfitting.
              */
-            fun learningRateMultiplier(learningRateMultiplier: LearningRateMultiplier) = apply {
-                this.learningRateMultiplier = learningRateMultiplier
-            }
+            fun learningRateMultiplier(learningRateMultiplier: LearningRateMultiplier) =
+                learningRateMultiplier(JsonField.of(learningRateMultiplier))
 
-            fun learningRateMultiplier(behavior: LearningRateMultiplier.Behavior) = apply {
-                this.learningRateMultiplier = LearningRateMultiplier.ofBehavior(behavior)
-            }
+            /**
+             * Scaling factor for the learning rate. A smaller learning rate may be useful to avoid
+             * overfitting.
+             */
+            fun learningRateMultiplier(learningRateMultiplier: JsonField<LearningRateMultiplier>) =
+                apply {
+                    this.learningRateMultiplier = learningRateMultiplier
+                }
 
-            fun learningRateMultiplier(number: Double) = apply {
-                this.learningRateMultiplier = LearningRateMultiplier.ofNumber(number)
-            }
+            /**
+             * Scaling factor for the learning rate. A smaller learning rate may be useful to avoid
+             * overfitting.
+             */
+            fun learningRateMultiplier(behavior: LearningRateMultiplier.Behavior) =
+                learningRateMultiplier(LearningRateMultiplier.ofBehavior(behavior))
+
+            /**
+             * Scaling factor for the learning rate. A smaller learning rate may be useful to avoid
+             * overfitting.
+             */
+            fun learningRateMultiplier(number: Double) =
+                learningRateMultiplier(LearningRateMultiplier.ofNumber(number))
 
             /**
              * The number of epochs to train the model for. An epoch refers to one full cycle
              * through the training dataset.
              */
-            fun nEpochs(nEpochs: NEpochs) = apply { this.nEpochs = nEpochs }
+            fun nEpochs(nEpochs: NEpochs) = nEpochs(JsonField.of(nEpochs))
 
-            fun nEpochs(behavior: NEpochs.Behavior) = apply {
-                this.nEpochs = NEpochs.ofBehavior(behavior)
-            }
+            /**
+             * The number of epochs to train the model for. An epoch refers to one full cycle
+             * through the training dataset.
+             */
+            fun nEpochs(nEpochs: JsonField<NEpochs>) = apply { this.nEpochs = nEpochs }
 
-            fun nEpochs(integer: Long) = apply { this.nEpochs = NEpochs.ofInteger(integer) }
+            /**
+             * The number of epochs to train the model for. An epoch refers to one full cycle
+             * through the training dataset.
+             */
+            fun nEpochs(behavior: NEpochs.Behavior) = nEpochs(NEpochs.ofBehavior(behavior))
+
+            /**
+             * The number of epochs to train the model for. An epoch refers to one full cycle
+             * through the training dataset.
+             */
+            fun nEpochs(integer: Long) = nEpochs(NEpochs.ofInteger(integer))
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
@@ -819,6 +1325,8 @@ constructor(
             private val _json: JsonValue? = null,
         ) {
 
+            private var validated: Boolean = false
+
             fun behavior(): Optional<Behavior> = Optional.ofNullable(behavior)
 
             fun integer(): Optional<Long> = Optional.ofNullable(integer)
@@ -838,6 +1346,15 @@ constructor(
                     behavior != null -> visitor.visitBehavior(behavior)
                     integer != null -> visitor.visitInteger(integer)
                     else -> visitor.unknown(_json)
+                }
+            }
+
+            fun validate(): BatchSize = apply {
+                if (!validated) {
+                    if (behavior == null && integer == null) {
+                        throw OpenAIInvalidDataException("Unknown BatchSize: $_json")
+                    }
+                    validated = true
                 }
             }
 
@@ -974,6 +1491,8 @@ constructor(
             private val _json: JsonValue? = null,
         ) {
 
+            private var validated: Boolean = false
+
             fun behavior(): Optional<Behavior> = Optional.ofNullable(behavior)
 
             fun number(): Optional<Double> = Optional.ofNullable(number)
@@ -993,6 +1512,15 @@ constructor(
                     behavior != null -> visitor.visitBehavior(behavior)
                     number != null -> visitor.visitNumber(number)
                     else -> visitor.unknown(_json)
+                }
+            }
+
+            fun validate(): LearningRateMultiplier = apply {
+                if (!validated) {
+                    if (behavior == null && number == null) {
+                        throw OpenAIInvalidDataException("Unknown LearningRateMultiplier: $_json")
+                    }
+                    validated = true
                 }
             }
 
@@ -1132,6 +1660,8 @@ constructor(
             private val _json: JsonValue? = null,
         ) {
 
+            private var validated: Boolean = false
+
             fun behavior(): Optional<Behavior> = Optional.ofNullable(behavior)
 
             fun integer(): Optional<Long> = Optional.ofNullable(integer)
@@ -1151,6 +1681,15 @@ constructor(
                     behavior != null -> visitor.visitBehavior(behavior)
                     integer != null -> visitor.visitInteger(integer)
                     else -> visitor.unknown(_json)
+                }
+            }
+
+            fun validate(): NEpochs = apply {
+                if (!validated) {
+                    if (behavior == null && integer == null) {
+                        throw OpenAIInvalidDataException("Unknown NEpochs: $_json")
+                    }
+                    validated = true
                 }
             }
 
@@ -1296,8 +1835,10 @@ constructor(
     class Integration
     @JsonCreator
     private constructor(
-        @JsonProperty("type") private val type: Type,
-        @JsonProperty("wandb") private val wandb: Wandb,
+        @JsonProperty("type") @ExcludeMissing private val type: JsonField<Type> = JsonMissing.of(),
+        @JsonProperty("wandb")
+        @ExcludeMissing
+        private val wandb: JsonField<Wandb> = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
@@ -1306,7 +1847,7 @@ constructor(
          * The type of integration to enable. Currently, only "wandb" (Weights and Biases) is
          * supported.
          */
-        @JsonProperty("type") fun type(): Type = type
+        fun type(): Type = type.getRequired("type")
 
         /**
          * The settings for your integration with Weights and Biases. This payload specifies the
@@ -1314,11 +1855,35 @@ constructor(
          * for your run, add tags to your run, and set a default entity (team, username, etc) to be
          * associated with your run.
          */
-        @JsonProperty("wandb") fun wandb(): Wandb = wandb
+        fun wandb(): Wandb = wandb.getRequired("wandb")
+
+        /**
+         * The type of integration to enable. Currently, only "wandb" (Weights and Biases) is
+         * supported.
+         */
+        @JsonProperty("type") @ExcludeMissing fun _type(): JsonField<Type> = type
+
+        /**
+         * The settings for your integration with Weights and Biases. This payload specifies the
+         * project that metrics will be sent to. Optionally, you can set an explicit display name
+         * for your run, add tags to your run, and set a default entity (team, username, etc) to be
+         * associated with your run.
+         */
+        @JsonProperty("wandb") @ExcludeMissing fun _wandb(): JsonField<Wandb> = wandb
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): Integration = apply {
+            if (!validated) {
+                type()
+                wandb().validate()
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -1329,8 +1894,8 @@ constructor(
 
         class Builder {
 
-            private var type: Type? = null
-            private var wandb: Wandb? = null
+            private var type: JsonField<Type>? = null
+            private var wandb: JsonField<Wandb>? = null
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1344,7 +1909,13 @@ constructor(
              * The type of integration to enable. Currently, only "wandb" (Weights and Biases) is
              * supported.
              */
-            fun type(type: Type) = apply { this.type = type }
+            fun type(type: Type) = type(JsonField.of(type))
+
+            /**
+             * The type of integration to enable. Currently, only "wandb" (Weights and Biases) is
+             * supported.
+             */
+            fun type(type: JsonField<Type>) = apply { this.type = type }
 
             /**
              * The settings for your integration with Weights and Biases. This payload specifies the
@@ -1352,7 +1923,15 @@ constructor(
              * name for your run, add tags to your run, and set a default entity (team, username,
              * etc) to be associated with your run.
              */
-            fun wandb(wandb: Wandb) = apply { this.wandb = wandb }
+            fun wandb(wandb: Wandb) = wandb(JsonField.of(wandb))
+
+            /**
+             * The settings for your integration with Weights and Biases. This payload specifies the
+             * project that metrics will be sent to. Optionally, you can set an explicit display
+             * name for your run, add tags to your run, and set a default entity (team, username,
+             * etc) to be associated with your run.
+             */
+            fun wandb(wandb: JsonField<Wandb>) = apply { this.wandb = wandb }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
@@ -1442,39 +2021,81 @@ constructor(
         class Wandb
         @JsonCreator
         private constructor(
-            @JsonProperty("project") private val project: String,
-            @JsonProperty("entity") private val entity: String?,
-            @JsonProperty("name") private val name: String?,
-            @JsonProperty("tags") private val tags: List<String>?,
+            @JsonProperty("project")
+            @ExcludeMissing
+            private val project: JsonField<String> = JsonMissing.of(),
+            @JsonProperty("entity")
+            @ExcludeMissing
+            private val entity: JsonField<String> = JsonMissing.of(),
+            @JsonProperty("name")
+            @ExcludeMissing
+            private val name: JsonField<String> = JsonMissing.of(),
+            @JsonProperty("tags")
+            @ExcludeMissing
+            private val tags: JsonField<List<String>> = JsonMissing.of(),
             @JsonAnySetter
             private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
 
             /** The name of the project that the new run will be created under. */
-            @JsonProperty("project") fun project(): String = project
+            fun project(): String = project.getRequired("project")
 
             /**
              * The entity to use for the run. This allows you to set the team or username of the
              * WandB user that you would like associated with the run. If not set, the default
              * entity for the registered WandB API key is used.
              */
-            @JsonProperty("entity") fun entity(): Optional<String> = Optional.ofNullable(entity)
+            fun entity(): Optional<String> = Optional.ofNullable(entity.getNullable("entity"))
 
             /**
              * A display name to set for the run. If not set, we will use the Job ID as the name.
              */
-            @JsonProperty("name") fun name(): Optional<String> = Optional.ofNullable(name)
+            fun name(): Optional<String> = Optional.ofNullable(name.getNullable("name"))
 
             /**
              * A list of tags to be attached to the newly created run. These tags are passed through
              * directly to WandB. Some default tags are generated by OpenAI: "openai/finetune",
              * "openai/{base-model}", "openai/{ftjob-abcdef}".
              */
-            @JsonProperty("tags") fun tags(): Optional<List<String>> = Optional.ofNullable(tags)
+            fun tags(): Optional<List<String>> = Optional.ofNullable(tags.getNullable("tags"))
+
+            /** The name of the project that the new run will be created under. */
+            @JsonProperty("project") @ExcludeMissing fun _project(): JsonField<String> = project
+
+            /**
+             * The entity to use for the run. This allows you to set the team or username of the
+             * WandB user that you would like associated with the run. If not set, the default
+             * entity for the registered WandB API key is used.
+             */
+            @JsonProperty("entity") @ExcludeMissing fun _entity(): JsonField<String> = entity
+
+            /**
+             * A display name to set for the run. If not set, we will use the Job ID as the name.
+             */
+            @JsonProperty("name") @ExcludeMissing fun _name(): JsonField<String> = name
+
+            /**
+             * A list of tags to be attached to the newly created run. These tags are passed through
+             * directly to WandB. Some default tags are generated by OpenAI: "openai/finetune",
+             * "openai/{base-model}", "openai/{ftjob-abcdef}".
+             */
+            @JsonProperty("tags") @ExcludeMissing fun _tags(): JsonField<List<String>> = tags
 
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
+
+            fun validate(): Wandb = apply {
+                if (!validated) {
+                    project()
+                    entity()
+                    name()
+                    tags()
+                    validated = true
+                }
+            }
 
             fun toBuilder() = Builder().from(this)
 
@@ -1485,10 +2106,10 @@ constructor(
 
             class Builder {
 
-                private var project: String? = null
-                private var entity: String? = null
-                private var name: String? = null
-                private var tags: MutableList<String>? = null
+                private var project: JsonField<String>? = null
+                private var entity: JsonField<String> = JsonMissing.of()
+                private var name: JsonField<String> = JsonMissing.of()
+                private var tags: JsonField<MutableList<String>>? = null
                 private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                 @JvmSynthetic
@@ -1496,32 +2117,70 @@ constructor(
                     project = wandb.project
                     entity = wandb.entity
                     name = wandb.name
-                    tags = wandb.tags?.toMutableList()
+                    tags = wandb.tags.map { it.toMutableList() }
                     additionalProperties = wandb.additionalProperties.toMutableMap()
                 }
 
                 /** The name of the project that the new run will be created under. */
-                fun project(project: String) = apply { this.project = project }
+                fun project(project: String) = project(JsonField.of(project))
+
+                /** The name of the project that the new run will be created under. */
+                fun project(project: JsonField<String>) = apply { this.project = project }
 
                 /**
                  * The entity to use for the run. This allows you to set the team or username of the
                  * WandB user that you would like associated with the run. If not set, the default
                  * entity for the registered WandB API key is used.
                  */
-                fun entity(entity: String) = apply { this.entity = entity }
+                fun entity(entity: String?) = entity(JsonField.ofNullable(entity))
+
+                /**
+                 * The entity to use for the run. This allows you to set the team or username of the
+                 * WandB user that you would like associated with the run. If not set, the default
+                 * entity for the registered WandB API key is used.
+                 */
+                fun entity(entity: Optional<String>) = entity(entity.orElse(null))
+
+                /**
+                 * The entity to use for the run. This allows you to set the team or username of the
+                 * WandB user that you would like associated with the run. If not set, the default
+                 * entity for the registered WandB API key is used.
+                 */
+                fun entity(entity: JsonField<String>) = apply { this.entity = entity }
 
                 /**
                  * A display name to set for the run. If not set, we will use the Job ID as the
                  * name.
                  */
-                fun name(name: String) = apply { this.name = name }
+                fun name(name: String?) = name(JsonField.ofNullable(name))
+
+                /**
+                 * A display name to set for the run. If not set, we will use the Job ID as the
+                 * name.
+                 */
+                fun name(name: Optional<String>) = name(name.orElse(null))
+
+                /**
+                 * A display name to set for the run. If not set, we will use the Job ID as the
+                 * name.
+                 */
+                fun name(name: JsonField<String>) = apply { this.name = name }
 
                 /**
                  * A list of tags to be attached to the newly created run. These tags are passed
                  * through directly to WandB. Some default tags are generated by OpenAI:
                  * "openai/finetune", "openai/{base-model}", "openai/{ftjob-abcdef}".
                  */
-                fun tags(tags: List<String>) = apply { this.tags = tags.toMutableList() }
+                fun tags(tags: List<String>) = tags(JsonField.of(tags))
+
+                /**
+                 * A list of tags to be attached to the newly created run. These tags are passed
+                 * through directly to WandB. Some default tags are generated by OpenAI:
+                 * "openai/finetune", "openai/{base-model}", "openai/{ftjob-abcdef}".
+                 */
+                fun tags(tags: JsonField<List<String>>) = apply {
+                    this.tags = tags.map { it.toMutableList() }
+                }
 
                 /**
                  * A list of tags to be attached to the newly created run. These tags are passed
@@ -1529,7 +2188,16 @@ constructor(
                  * "openai/finetune", "openai/{base-model}", "openai/{ftjob-abcdef}".
                  */
                 fun addTag(tag: String) = apply {
-                    tags = (tags ?: mutableListOf()).apply { add(tag) }
+                    tags =
+                        (tags ?: JsonField.of(mutableListOf())).apply {
+                            asKnown()
+                                .orElseThrow {
+                                    IllegalStateException(
+                                        "Field was set to non-list type: ${javaClass.simpleName}"
+                                    )
+                                }
+                                .add(tag)
+                        }
                 }
 
                 fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
@@ -1559,7 +2227,7 @@ constructor(
                         checkNotNull(project) { "`project` is required but was not set" },
                         entity,
                         name,
-                        tags?.toImmutable(),
+                        (tags ?: JsonMissing.of()).map { it.toImmutable() },
                         additionalProperties.toImmutable(),
                     )
             }
@@ -1605,26 +2273,50 @@ constructor(
     class Method
     @JsonCreator
     private constructor(
-        @JsonProperty("dpo") private val dpo: Dpo?,
-        @JsonProperty("supervised") private val supervised: Supervised?,
-        @JsonProperty("type") private val type: Type?,
+        @JsonProperty("dpo") @ExcludeMissing private val dpo: JsonField<Dpo> = JsonMissing.of(),
+        @JsonProperty("supervised")
+        @ExcludeMissing
+        private val supervised: JsonField<Supervised> = JsonMissing.of(),
+        @JsonProperty("type") @ExcludeMissing private val type: JsonField<Type> = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
 
         /** Configuration for the DPO fine-tuning method. */
-        @JsonProperty("dpo") fun dpo(): Optional<Dpo> = Optional.ofNullable(dpo)
+        fun dpo(): Optional<Dpo> = Optional.ofNullable(dpo.getNullable("dpo"))
+
+        /** Configuration for the supervised fine-tuning method. */
+        fun supervised(): Optional<Supervised> =
+            Optional.ofNullable(supervised.getNullable("supervised"))
+
+        /** The type of method. Is either `supervised` or `dpo`. */
+        fun type(): Optional<Type> = Optional.ofNullable(type.getNullable("type"))
+
+        /** Configuration for the DPO fine-tuning method. */
+        @JsonProperty("dpo") @ExcludeMissing fun _dpo(): JsonField<Dpo> = dpo
 
         /** Configuration for the supervised fine-tuning method. */
         @JsonProperty("supervised")
-        fun supervised(): Optional<Supervised> = Optional.ofNullable(supervised)
+        @ExcludeMissing
+        fun _supervised(): JsonField<Supervised> = supervised
 
         /** The type of method. Is either `supervised` or `dpo`. */
-        @JsonProperty("type") fun type(): Optional<Type> = Optional.ofNullable(type)
+        @JsonProperty("type") @ExcludeMissing fun _type(): JsonField<Type> = type
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): Method = apply {
+            if (!validated) {
+                dpo().map { it.validate() }
+                supervised().map { it.validate() }
+                type()
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -1635,9 +2327,9 @@ constructor(
 
         class Builder {
 
-            private var dpo: Dpo? = null
-            private var supervised: Supervised? = null
-            private var type: Type? = null
+            private var dpo: JsonField<Dpo> = JsonMissing.of()
+            private var supervised: JsonField<Supervised> = JsonMissing.of()
+            private var type: JsonField<Type> = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1649,13 +2341,24 @@ constructor(
             }
 
             /** Configuration for the DPO fine-tuning method. */
-            fun dpo(dpo: Dpo) = apply { this.dpo = dpo }
+            fun dpo(dpo: Dpo) = dpo(JsonField.of(dpo))
+
+            /** Configuration for the DPO fine-tuning method. */
+            fun dpo(dpo: JsonField<Dpo>) = apply { this.dpo = dpo }
 
             /** Configuration for the supervised fine-tuning method. */
-            fun supervised(supervised: Supervised) = apply { this.supervised = supervised }
+            fun supervised(supervised: Supervised) = supervised(JsonField.of(supervised))
+
+            /** Configuration for the supervised fine-tuning method. */
+            fun supervised(supervised: JsonField<Supervised>) = apply {
+                this.supervised = supervised
+            }
 
             /** The type of method. Is either `supervised` or `dpo`. */
-            fun type(type: Type) = apply { this.type = type }
+            fun type(type: Type) = type(JsonField.of(type))
+
+            /** The type of method. Is either `supervised` or `dpo`. */
+            fun type(type: JsonField<Type>) = apply { this.type = type }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
@@ -1690,18 +2393,34 @@ constructor(
         class Dpo
         @JsonCreator
         private constructor(
-            @JsonProperty("hyperparameters") private val hyperparameters: Hyperparameters?,
+            @JsonProperty("hyperparameters")
+            @ExcludeMissing
+            private val hyperparameters: JsonField<Hyperparameters> = JsonMissing.of(),
             @JsonAnySetter
             private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
 
             /** The hyperparameters used for the fine-tuning job. */
+            fun hyperparameters(): Optional<Hyperparameters> =
+                Optional.ofNullable(hyperparameters.getNullable("hyperparameters"))
+
+            /** The hyperparameters used for the fine-tuning job. */
             @JsonProperty("hyperparameters")
-            fun hyperparameters(): Optional<Hyperparameters> = Optional.ofNullable(hyperparameters)
+            @ExcludeMissing
+            fun _hyperparameters(): JsonField<Hyperparameters> = hyperparameters
 
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
+
+            fun validate(): Dpo = apply {
+                if (!validated) {
+                    hyperparameters().map { it.validate() }
+                    validated = true
+                }
+            }
 
             fun toBuilder() = Builder().from(this)
 
@@ -1712,7 +2431,7 @@ constructor(
 
             class Builder {
 
-                private var hyperparameters: Hyperparameters? = null
+                private var hyperparameters: JsonField<Hyperparameters> = JsonMissing.of()
                 private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                 @JvmSynthetic
@@ -1722,7 +2441,11 @@ constructor(
                 }
 
                 /** The hyperparameters used for the fine-tuning job. */
-                fun hyperparameters(hyperparameters: Hyperparameters) = apply {
+                fun hyperparameters(hyperparameters: Hyperparameters) =
+                    hyperparameters(JsonField.of(hyperparameters))
+
+                /** The hyperparameters used for the fine-tuning job. */
+                fun hyperparameters(hyperparameters: JsonField<Hyperparameters>) = apply {
                     this.hyperparameters = hyperparameters
                 }
 
@@ -1756,11 +2479,19 @@ constructor(
             class Hyperparameters
             @JsonCreator
             private constructor(
-                @JsonProperty("batch_size") private val batchSize: BatchSize?,
-                @JsonProperty("beta") private val beta: Beta?,
+                @JsonProperty("batch_size")
+                @ExcludeMissing
+                private val batchSize: JsonField<BatchSize> = JsonMissing.of(),
+                @JsonProperty("beta")
+                @ExcludeMissing
+                private val beta: JsonField<Beta> = JsonMissing.of(),
                 @JsonProperty("learning_rate_multiplier")
-                private val learningRateMultiplier: LearningRateMultiplier?,
-                @JsonProperty("n_epochs") private val nEpochs: NEpochs?,
+                @ExcludeMissing
+                private val learningRateMultiplier: JsonField<LearningRateMultiplier> =
+                    JsonMissing.of(),
+                @JsonProperty("n_epochs")
+                @ExcludeMissing
+                private val nEpochs: JsonField<NEpochs> = JsonMissing.of(),
                 @JsonAnySetter
                 private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
             ) {
@@ -1769,33 +2500,77 @@ constructor(
                  * Number of examples in each batch. A larger batch size means that model parameters
                  * are updated less frequently, but with lower variance.
                  */
-                @JsonProperty("batch_size")
-                fun batchSize(): Optional<BatchSize> = Optional.ofNullable(batchSize)
+                fun batchSize(): Optional<BatchSize> =
+                    Optional.ofNullable(batchSize.getNullable("batch_size"))
 
                 /**
                  * The beta value for the DPO method. A higher beta value will increase the weight
                  * of the penalty between the policy and reference model.
                  */
-                @JsonProperty("beta") fun beta(): Optional<Beta> = Optional.ofNullable(beta)
+                fun beta(): Optional<Beta> = Optional.ofNullable(beta.getNullable("beta"))
+
+                /**
+                 * Scaling factor for the learning rate. A smaller learning rate may be useful to
+                 * avoid overfitting.
+                 */
+                fun learningRateMultiplier(): Optional<LearningRateMultiplier> =
+                    Optional.ofNullable(
+                        learningRateMultiplier.getNullable("learning_rate_multiplier")
+                    )
+
+                /**
+                 * The number of epochs to train the model for. An epoch refers to one full cycle
+                 * through the training dataset.
+                 */
+                fun nEpochs(): Optional<NEpochs> =
+                    Optional.ofNullable(nEpochs.getNullable("n_epochs"))
+
+                /**
+                 * Number of examples in each batch. A larger batch size means that model parameters
+                 * are updated less frequently, but with lower variance.
+                 */
+                @JsonProperty("batch_size")
+                @ExcludeMissing
+                fun _batchSize(): JsonField<BatchSize> = batchSize
+
+                /**
+                 * The beta value for the DPO method. A higher beta value will increase the weight
+                 * of the penalty between the policy and reference model.
+                 */
+                @JsonProperty("beta") @ExcludeMissing fun _beta(): JsonField<Beta> = beta
 
                 /**
                  * Scaling factor for the learning rate. A smaller learning rate may be useful to
                  * avoid overfitting.
                  */
                 @JsonProperty("learning_rate_multiplier")
-                fun learningRateMultiplier(): Optional<LearningRateMultiplier> =
-                    Optional.ofNullable(learningRateMultiplier)
+                @ExcludeMissing
+                fun _learningRateMultiplier(): JsonField<LearningRateMultiplier> =
+                    learningRateMultiplier
 
                 /**
                  * The number of epochs to train the model for. An epoch refers to one full cycle
                  * through the training dataset.
                  */
                 @JsonProperty("n_epochs")
-                fun nEpochs(): Optional<NEpochs> = Optional.ofNullable(nEpochs)
+                @ExcludeMissing
+                fun _nEpochs(): JsonField<NEpochs> = nEpochs
 
                 @JsonAnyGetter
                 @ExcludeMissing
                 fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+                private var validated: Boolean = false
+
+                fun validate(): Hyperparameters = apply {
+                    if (!validated) {
+                        batchSize()
+                        beta()
+                        learningRateMultiplier()
+                        nEpochs()
+                        validated = true
+                    }
+                }
 
                 fun toBuilder() = Builder().from(this)
 
@@ -1806,10 +2581,11 @@ constructor(
 
                 class Builder {
 
-                    private var batchSize: BatchSize? = null
-                    private var beta: Beta? = null
-                    private var learningRateMultiplier: LearningRateMultiplier? = null
-                    private var nEpochs: NEpochs? = null
+                    private var batchSize: JsonField<BatchSize> = JsonMissing.of()
+                    private var beta: JsonField<Beta> = JsonMissing.of()
+                    private var learningRateMultiplier: JsonField<LearningRateMultiplier> =
+                        JsonMissing.of()
+                    private var nEpochs: JsonField<NEpochs> = JsonMissing.of()
                     private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                     @JvmSynthetic
@@ -1825,52 +2601,104 @@ constructor(
                      * Number of examples in each batch. A larger batch size means that model
                      * parameters are updated less frequently, but with lower variance.
                      */
-                    fun batchSize(batchSize: BatchSize) = apply { this.batchSize = batchSize }
+                    fun batchSize(batchSize: BatchSize) = batchSize(JsonField.of(batchSize))
 
-                    fun batchSize(auto: BatchSize.Auto) = apply {
-                        this.batchSize = BatchSize.ofAuto(auto)
+                    /**
+                     * Number of examples in each batch. A larger batch size means that model
+                     * parameters are updated less frequently, but with lower variance.
+                     */
+                    fun batchSize(batchSize: JsonField<BatchSize>) = apply {
+                        this.batchSize = batchSize
                     }
 
-                    fun batchSize(manual: Long) = apply {
-                        this.batchSize = BatchSize.ofManual(manual)
-                    }
+                    /**
+                     * Number of examples in each batch. A larger batch size means that model
+                     * parameters are updated less frequently, but with lower variance.
+                     */
+                    fun batchSize(auto: BatchSize.Auto) = batchSize(BatchSize.ofAuto(auto))
+
+                    /**
+                     * Number of examples in each batch. A larger batch size means that model
+                     * parameters are updated less frequently, but with lower variance.
+                     */
+                    fun batchSize(manual: Long) = batchSize(BatchSize.ofManual(manual))
 
                     /**
                      * The beta value for the DPO method. A higher beta value will increase the
                      * weight of the penalty between the policy and reference model.
                      */
-                    fun beta(beta: Beta) = apply { this.beta = beta }
+                    fun beta(beta: Beta) = beta(JsonField.of(beta))
 
-                    fun beta(auto: Beta.Auto) = apply { this.beta = Beta.ofAuto(auto) }
+                    /**
+                     * The beta value for the DPO method. A higher beta value will increase the
+                     * weight of the penalty between the policy and reference model.
+                     */
+                    fun beta(beta: JsonField<Beta>) = apply { this.beta = beta }
 
-                    fun beta(manual: Double) = apply { this.beta = Beta.ofManual(manual) }
+                    /**
+                     * The beta value for the DPO method. A higher beta value will increase the
+                     * weight of the penalty between the policy and reference model.
+                     */
+                    fun beta(auto: Beta.Auto) = beta(Beta.ofAuto(auto))
+
+                    /**
+                     * The beta value for the DPO method. A higher beta value will increase the
+                     * weight of the penalty between the policy and reference model.
+                     */
+                    fun beta(manual: Double) = beta(Beta.ofManual(manual))
 
                     /**
                      * Scaling factor for the learning rate. A smaller learning rate may be useful
                      * to avoid overfitting.
                      */
                     fun learningRateMultiplier(learningRateMultiplier: LearningRateMultiplier) =
-                        apply {
-                            this.learningRateMultiplier = learningRateMultiplier
-                        }
+                        learningRateMultiplier(JsonField.of(learningRateMultiplier))
 
-                    fun learningRateMultiplier(auto: LearningRateMultiplier.Auto) = apply {
-                        this.learningRateMultiplier = LearningRateMultiplier.ofAuto(auto)
-                    }
+                    /**
+                     * Scaling factor for the learning rate. A smaller learning rate may be useful
+                     * to avoid overfitting.
+                     */
+                    fun learningRateMultiplier(
+                        learningRateMultiplier: JsonField<LearningRateMultiplier>
+                    ) = apply { this.learningRateMultiplier = learningRateMultiplier }
 
-                    fun learningRateMultiplier(manual: Double) = apply {
-                        this.learningRateMultiplier = LearningRateMultiplier.ofManual(manual)
-                    }
+                    /**
+                     * Scaling factor for the learning rate. A smaller learning rate may be useful
+                     * to avoid overfitting.
+                     */
+                    fun learningRateMultiplier(auto: LearningRateMultiplier.Auto) =
+                        learningRateMultiplier(LearningRateMultiplier.ofAuto(auto))
+
+                    /**
+                     * Scaling factor for the learning rate. A smaller learning rate may be useful
+                     * to avoid overfitting.
+                     */
+                    fun learningRateMultiplier(manual: Double) =
+                        learningRateMultiplier(LearningRateMultiplier.ofManual(manual))
 
                     /**
                      * The number of epochs to train the model for. An epoch refers to one full
                      * cycle through the training dataset.
                      */
-                    fun nEpochs(nEpochs: NEpochs) = apply { this.nEpochs = nEpochs }
+                    fun nEpochs(nEpochs: NEpochs) = nEpochs(JsonField.of(nEpochs))
 
-                    fun nEpochs(auto: NEpochs.Auto) = apply { this.nEpochs = NEpochs.ofAuto(auto) }
+                    /**
+                     * The number of epochs to train the model for. An epoch refers to one full
+                     * cycle through the training dataset.
+                     */
+                    fun nEpochs(nEpochs: JsonField<NEpochs>) = apply { this.nEpochs = nEpochs }
 
-                    fun nEpochs(manual: Long) = apply { this.nEpochs = NEpochs.ofManual(manual) }
+                    /**
+                     * The number of epochs to train the model for. An epoch refers to one full
+                     * cycle through the training dataset.
+                     */
+                    fun nEpochs(auto: NEpochs.Auto) = nEpochs(NEpochs.ofAuto(auto))
+
+                    /**
+                     * The number of epochs to train the model for. An epoch refers to one full
+                     * cycle through the training dataset.
+                     */
+                    fun nEpochs(manual: Long) = nEpochs(NEpochs.ofManual(manual))
 
                     fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                         this.additionalProperties.clear()
@@ -1917,6 +2745,8 @@ constructor(
                     private val _json: JsonValue? = null,
                 ) {
 
+                    private var validated: Boolean = false
+
                     fun auto(): Optional<Auto> = Optional.ofNullable(auto)
 
                     fun manual(): Optional<Long> = Optional.ofNullable(manual)
@@ -1936,6 +2766,15 @@ constructor(
                             auto != null -> visitor.visitAuto(auto)
                             manual != null -> visitor.visitManual(manual)
                             else -> visitor.unknown(_json)
+                        }
+                    }
+
+                    fun validate(): BatchSize = apply {
+                        if (!validated) {
+                            if (auto == null && manual == null) {
+                                throw OpenAIInvalidDataException("Unknown BatchSize: $_json")
+                            }
+                            validated = true
                         }
                     }
 
@@ -2073,6 +2912,8 @@ constructor(
                     private val _json: JsonValue? = null,
                 ) {
 
+                    private var validated: Boolean = false
+
                     fun auto(): Optional<Auto> = Optional.ofNullable(auto)
 
                     fun manual(): Optional<Double> = Optional.ofNullable(manual)
@@ -2092,6 +2933,15 @@ constructor(
                             auto != null -> visitor.visitAuto(auto)
                             manual != null -> visitor.visitManual(manual)
                             else -> visitor.unknown(_json)
+                        }
+                    }
+
+                    fun validate(): Beta = apply {
+                        if (!validated) {
+                            if (auto == null && manual == null) {
+                                throw OpenAIInvalidDataException("Unknown Beta: $_json")
+                            }
+                            validated = true
                         }
                     }
 
@@ -2229,6 +3079,8 @@ constructor(
                     private val _json: JsonValue? = null,
                 ) {
 
+                    private var validated: Boolean = false
+
                     fun auto(): Optional<Auto> = Optional.ofNullable(auto)
 
                     fun manual(): Optional<Double> = Optional.ofNullable(manual)
@@ -2248,6 +3100,17 @@ constructor(
                             auto != null -> visitor.visitAuto(auto)
                             manual != null -> visitor.visitManual(manual)
                             else -> visitor.unknown(_json)
+                        }
+                    }
+
+                    fun validate(): LearningRateMultiplier = apply {
+                        if (!validated) {
+                            if (auto == null && manual == null) {
+                                throw OpenAIInvalidDataException(
+                                    "Unknown LearningRateMultiplier: $_json"
+                                )
+                            }
+                            validated = true
                         }
                     }
 
@@ -2393,6 +3256,8 @@ constructor(
                     private val _json: JsonValue? = null,
                 ) {
 
+                    private var validated: Boolean = false
+
                     fun auto(): Optional<Auto> = Optional.ofNullable(auto)
 
                     fun manual(): Optional<Long> = Optional.ofNullable(manual)
@@ -2412,6 +3277,15 @@ constructor(
                             auto != null -> visitor.visitAuto(auto)
                             manual != null -> visitor.visitManual(manual)
                             else -> visitor.unknown(_json)
+                        }
+                    }
+
+                    fun validate(): NEpochs = apply {
+                        if (!validated) {
+                            if (auto == null && manual == null) {
+                                throw OpenAIInvalidDataException("Unknown NEpochs: $_json")
+                            }
+                            validated = true
                         }
                     }
 
@@ -2577,18 +3451,34 @@ constructor(
         class Supervised
         @JsonCreator
         private constructor(
-            @JsonProperty("hyperparameters") private val hyperparameters: Hyperparameters?,
+            @JsonProperty("hyperparameters")
+            @ExcludeMissing
+            private val hyperparameters: JsonField<Hyperparameters> = JsonMissing.of(),
             @JsonAnySetter
             private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
 
             /** The hyperparameters used for the fine-tuning job. */
+            fun hyperparameters(): Optional<Hyperparameters> =
+                Optional.ofNullable(hyperparameters.getNullable("hyperparameters"))
+
+            /** The hyperparameters used for the fine-tuning job. */
             @JsonProperty("hyperparameters")
-            fun hyperparameters(): Optional<Hyperparameters> = Optional.ofNullable(hyperparameters)
+            @ExcludeMissing
+            fun _hyperparameters(): JsonField<Hyperparameters> = hyperparameters
 
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
+
+            fun validate(): Supervised = apply {
+                if (!validated) {
+                    hyperparameters().map { it.validate() }
+                    validated = true
+                }
+            }
 
             fun toBuilder() = Builder().from(this)
 
@@ -2599,7 +3489,7 @@ constructor(
 
             class Builder {
 
-                private var hyperparameters: Hyperparameters? = null
+                private var hyperparameters: JsonField<Hyperparameters> = JsonMissing.of()
                 private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                 @JvmSynthetic
@@ -2609,7 +3499,11 @@ constructor(
                 }
 
                 /** The hyperparameters used for the fine-tuning job. */
-                fun hyperparameters(hyperparameters: Hyperparameters) = apply {
+                fun hyperparameters(hyperparameters: Hyperparameters) =
+                    hyperparameters(JsonField.of(hyperparameters))
+
+                /** The hyperparameters used for the fine-tuning job. */
+                fun hyperparameters(hyperparameters: JsonField<Hyperparameters>) = apply {
                     this.hyperparameters = hyperparameters
                 }
 
@@ -2644,10 +3538,16 @@ constructor(
             class Hyperparameters
             @JsonCreator
             private constructor(
-                @JsonProperty("batch_size") private val batchSize: BatchSize?,
+                @JsonProperty("batch_size")
+                @ExcludeMissing
+                private val batchSize: JsonField<BatchSize> = JsonMissing.of(),
                 @JsonProperty("learning_rate_multiplier")
-                private val learningRateMultiplier: LearningRateMultiplier?,
-                @JsonProperty("n_epochs") private val nEpochs: NEpochs?,
+                @ExcludeMissing
+                private val learningRateMultiplier: JsonField<LearningRateMultiplier> =
+                    JsonMissing.of(),
+                @JsonProperty("n_epochs")
+                @ExcludeMissing
+                private val nEpochs: JsonField<NEpochs> = JsonMissing.of(),
                 @JsonAnySetter
                 private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
             ) {
@@ -2656,27 +3556,64 @@ constructor(
                  * Number of examples in each batch. A larger batch size means that model parameters
                  * are updated less frequently, but with lower variance.
                  */
+                fun batchSize(): Optional<BatchSize> =
+                    Optional.ofNullable(batchSize.getNullable("batch_size"))
+
+                /**
+                 * Scaling factor for the learning rate. A smaller learning rate may be useful to
+                 * avoid overfitting.
+                 */
+                fun learningRateMultiplier(): Optional<LearningRateMultiplier> =
+                    Optional.ofNullable(
+                        learningRateMultiplier.getNullable("learning_rate_multiplier")
+                    )
+
+                /**
+                 * The number of epochs to train the model for. An epoch refers to one full cycle
+                 * through the training dataset.
+                 */
+                fun nEpochs(): Optional<NEpochs> =
+                    Optional.ofNullable(nEpochs.getNullable("n_epochs"))
+
+                /**
+                 * Number of examples in each batch. A larger batch size means that model parameters
+                 * are updated less frequently, but with lower variance.
+                 */
                 @JsonProperty("batch_size")
-                fun batchSize(): Optional<BatchSize> = Optional.ofNullable(batchSize)
+                @ExcludeMissing
+                fun _batchSize(): JsonField<BatchSize> = batchSize
 
                 /**
                  * Scaling factor for the learning rate. A smaller learning rate may be useful to
                  * avoid overfitting.
                  */
                 @JsonProperty("learning_rate_multiplier")
-                fun learningRateMultiplier(): Optional<LearningRateMultiplier> =
-                    Optional.ofNullable(learningRateMultiplier)
+                @ExcludeMissing
+                fun _learningRateMultiplier(): JsonField<LearningRateMultiplier> =
+                    learningRateMultiplier
 
                 /**
                  * The number of epochs to train the model for. An epoch refers to one full cycle
                  * through the training dataset.
                  */
                 @JsonProperty("n_epochs")
-                fun nEpochs(): Optional<NEpochs> = Optional.ofNullable(nEpochs)
+                @ExcludeMissing
+                fun _nEpochs(): JsonField<NEpochs> = nEpochs
 
                 @JsonAnyGetter
                 @ExcludeMissing
                 fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+                private var validated: Boolean = false
+
+                fun validate(): Hyperparameters = apply {
+                    if (!validated) {
+                        batchSize()
+                        learningRateMultiplier()
+                        nEpochs()
+                        validated = true
+                    }
+                }
 
                 fun toBuilder() = Builder().from(this)
 
@@ -2687,9 +3624,10 @@ constructor(
 
                 class Builder {
 
-                    private var batchSize: BatchSize? = null
-                    private var learningRateMultiplier: LearningRateMultiplier? = null
-                    private var nEpochs: NEpochs? = null
+                    private var batchSize: JsonField<BatchSize> = JsonMissing.of()
+                    private var learningRateMultiplier: JsonField<LearningRateMultiplier> =
+                        JsonMissing.of()
+                    private var nEpochs: JsonField<NEpochs> = JsonMissing.of()
                     private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                     @JvmSynthetic
@@ -2704,42 +3642,80 @@ constructor(
                      * Number of examples in each batch. A larger batch size means that model
                      * parameters are updated less frequently, but with lower variance.
                      */
-                    fun batchSize(batchSize: BatchSize) = apply { this.batchSize = batchSize }
+                    fun batchSize(batchSize: BatchSize) = batchSize(JsonField.of(batchSize))
 
-                    fun batchSize(auto: BatchSize.Auto) = apply {
-                        this.batchSize = BatchSize.ofAuto(auto)
+                    /**
+                     * Number of examples in each batch. A larger batch size means that model
+                     * parameters are updated less frequently, but with lower variance.
+                     */
+                    fun batchSize(batchSize: JsonField<BatchSize>) = apply {
+                        this.batchSize = batchSize
                     }
 
-                    fun batchSize(manual: Long) = apply {
-                        this.batchSize = BatchSize.ofManual(manual)
-                    }
+                    /**
+                     * Number of examples in each batch. A larger batch size means that model
+                     * parameters are updated less frequently, but with lower variance.
+                     */
+                    fun batchSize(auto: BatchSize.Auto) = batchSize(BatchSize.ofAuto(auto))
+
+                    /**
+                     * Number of examples in each batch. A larger batch size means that model
+                     * parameters are updated less frequently, but with lower variance.
+                     */
+                    fun batchSize(manual: Long) = batchSize(BatchSize.ofManual(manual))
 
                     /**
                      * Scaling factor for the learning rate. A smaller learning rate may be useful
                      * to avoid overfitting.
                      */
                     fun learningRateMultiplier(learningRateMultiplier: LearningRateMultiplier) =
-                        apply {
-                            this.learningRateMultiplier = learningRateMultiplier
-                        }
+                        learningRateMultiplier(JsonField.of(learningRateMultiplier))
 
-                    fun learningRateMultiplier(auto: LearningRateMultiplier.Auto) = apply {
-                        this.learningRateMultiplier = LearningRateMultiplier.ofAuto(auto)
-                    }
+                    /**
+                     * Scaling factor for the learning rate. A smaller learning rate may be useful
+                     * to avoid overfitting.
+                     */
+                    fun learningRateMultiplier(
+                        learningRateMultiplier: JsonField<LearningRateMultiplier>
+                    ) = apply { this.learningRateMultiplier = learningRateMultiplier }
 
-                    fun learningRateMultiplier(manual: Double) = apply {
-                        this.learningRateMultiplier = LearningRateMultiplier.ofManual(manual)
-                    }
+                    /**
+                     * Scaling factor for the learning rate. A smaller learning rate may be useful
+                     * to avoid overfitting.
+                     */
+                    fun learningRateMultiplier(auto: LearningRateMultiplier.Auto) =
+                        learningRateMultiplier(LearningRateMultiplier.ofAuto(auto))
+
+                    /**
+                     * Scaling factor for the learning rate. A smaller learning rate may be useful
+                     * to avoid overfitting.
+                     */
+                    fun learningRateMultiplier(manual: Double) =
+                        learningRateMultiplier(LearningRateMultiplier.ofManual(manual))
 
                     /**
                      * The number of epochs to train the model for. An epoch refers to one full
                      * cycle through the training dataset.
                      */
-                    fun nEpochs(nEpochs: NEpochs) = apply { this.nEpochs = nEpochs }
+                    fun nEpochs(nEpochs: NEpochs) = nEpochs(JsonField.of(nEpochs))
 
-                    fun nEpochs(auto: NEpochs.Auto) = apply { this.nEpochs = NEpochs.ofAuto(auto) }
+                    /**
+                     * The number of epochs to train the model for. An epoch refers to one full
+                     * cycle through the training dataset.
+                     */
+                    fun nEpochs(nEpochs: JsonField<NEpochs>) = apply { this.nEpochs = nEpochs }
 
-                    fun nEpochs(manual: Long) = apply { this.nEpochs = NEpochs.ofManual(manual) }
+                    /**
+                     * The number of epochs to train the model for. An epoch refers to one full
+                     * cycle through the training dataset.
+                     */
+                    fun nEpochs(auto: NEpochs.Auto) = nEpochs(NEpochs.ofAuto(auto))
+
+                    /**
+                     * The number of epochs to train the model for. An epoch refers to one full
+                     * cycle through the training dataset.
+                     */
+                    fun nEpochs(manual: Long) = nEpochs(NEpochs.ofManual(manual))
 
                     fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                         this.additionalProperties.clear()
@@ -2785,6 +3761,8 @@ constructor(
                     private val _json: JsonValue? = null,
                 ) {
 
+                    private var validated: Boolean = false
+
                     fun auto(): Optional<Auto> = Optional.ofNullable(auto)
 
                     fun manual(): Optional<Long> = Optional.ofNullable(manual)
@@ -2804,6 +3782,15 @@ constructor(
                             auto != null -> visitor.visitAuto(auto)
                             manual != null -> visitor.visitManual(manual)
                             else -> visitor.unknown(_json)
+                        }
+                    }
+
+                    fun validate(): BatchSize = apply {
+                        if (!validated) {
+                            if (auto == null && manual == null) {
+                                throw OpenAIInvalidDataException("Unknown BatchSize: $_json")
+                            }
+                            validated = true
                         }
                     }
 
@@ -2941,6 +3928,8 @@ constructor(
                     private val _json: JsonValue? = null,
                 ) {
 
+                    private var validated: Boolean = false
+
                     fun auto(): Optional<Auto> = Optional.ofNullable(auto)
 
                     fun manual(): Optional<Double> = Optional.ofNullable(manual)
@@ -2960,6 +3949,17 @@ constructor(
                             auto != null -> visitor.visitAuto(auto)
                             manual != null -> visitor.visitManual(manual)
                             else -> visitor.unknown(_json)
+                        }
+                    }
+
+                    fun validate(): LearningRateMultiplier = apply {
+                        if (!validated) {
+                            if (auto == null && manual == null) {
+                                throw OpenAIInvalidDataException(
+                                    "Unknown LearningRateMultiplier: $_json"
+                                )
+                            }
+                            validated = true
                         }
                     }
 
@@ -3105,6 +4105,8 @@ constructor(
                     private val _json: JsonValue? = null,
                 ) {
 
+                    private var validated: Boolean = false
+
                     fun auto(): Optional<Auto> = Optional.ofNullable(auto)
 
                     fun manual(): Optional<Long> = Optional.ofNullable(manual)
@@ -3124,6 +4126,15 @@ constructor(
                             auto != null -> visitor.visitAuto(auto)
                             manual != null -> visitor.visitManual(manual)
                             else -> visitor.unknown(_json)
+                        }
+                    }
+
+                    fun validate(): NEpochs = apply {
+                        if (!validated) {
+                            if (auto == null && manual == null) {
+                                throw OpenAIInvalidDataException("Unknown NEpochs: $_json")
+                            }
+                            validated = true
                         }
                     }
 

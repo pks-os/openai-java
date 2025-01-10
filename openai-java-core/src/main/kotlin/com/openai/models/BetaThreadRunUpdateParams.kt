@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.openai.core.ExcludeMissing
+import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.http.Headers
@@ -14,8 +15,8 @@ import com.openai.core.http.QueryParams
 import com.openai.core.immutableEmptyMap
 import com.openai.core.toImmutable
 import java.util.Objects
-import java.util.Optional
 
+/** Modifies a run. */
 class BetaThreadRunUpdateParams
 constructor(
     private val threadId: String,
@@ -34,13 +35,13 @@ constructor(
      * additional information about the object in a structured format. Keys can be a maximum of 64
      * characters long and values can be a maximum of 512 characters long.
      */
-    fun metadata(): Optional<JsonValue> = body.metadata()
+    fun _metadata(): JsonValue = body._metadata()
+
+    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
 
     fun _additionalHeaders(): Headers = additionalHeaders
 
     fun _additionalQueryParams(): QueryParams = additionalQueryParams
-
-    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
 
     @JvmSynthetic internal fun getBody(): BetaThreadRunUpdateBody = body
 
@@ -60,7 +61,9 @@ constructor(
     class BetaThreadRunUpdateBody
     @JsonCreator
     internal constructor(
-        @JsonProperty("metadata") private val metadata: JsonValue?,
+        @JsonProperty("metadata")
+        @ExcludeMissing
+        private val metadata: JsonValue = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
@@ -70,12 +73,19 @@ constructor(
          * storing additional information about the object in a structured format. Keys can be a
          * maximum of 64 characters long and values can be a maximum of 512 characters long.
          */
-        @JsonProperty("metadata")
-        fun metadata(): Optional<JsonValue> = Optional.ofNullable(metadata)
+        @JsonProperty("metadata") @ExcludeMissing fun _metadata(): JsonValue = metadata
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): BetaThreadRunUpdateBody = apply {
+            if (!validated) {
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -86,7 +96,7 @@ constructor(
 
         class Builder {
 
-            private var metadata: JsonValue? = null
+            private var metadata: JsonValue = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -178,6 +188,25 @@ constructor(
          * maximum of 64 characters long and values can be a maximum of 512 characters long.
          */
         fun metadata(metadata: JsonValue) = apply { body.metadata(metadata) }
+
+        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
+            body.additionalProperties(additionalBodyProperties)
+        }
+
+        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
+            body.putAdditionalProperty(key, value)
+        }
+
+        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
+            apply {
+                body.putAllAdditionalProperties(additionalBodyProperties)
+            }
+
+        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
+
+        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
+            body.removeAllAdditionalProperties(keys)
+        }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -275,25 +304,6 @@ constructor(
 
         fun removeAllAdditionalQueryParams(keys: Set<String>) = apply {
             additionalQueryParams.removeAll(keys)
-        }
-
-        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
-            body.additionalProperties(additionalBodyProperties)
-        }
-
-        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
-            body.putAdditionalProperty(key, value)
-        }
-
-        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
-            apply {
-                body.putAllAdditionalProperties(additionalBodyProperties)
-            }
-
-        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
-
-        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
-            body.removeAllAdditionalProperties(keys)
         }
 
         fun build(): BetaThreadRunUpdateParams =

@@ -8,6 +8,7 @@ import com.openai.core.http.QueryParams
 import java.util.Objects
 import java.util.Optional
 
+/** Get status updates for a fine-tuning job. */
 class FineTuningJobListEventsParams
 constructor(
     private val fineTuningJobId: String,
@@ -77,10 +78,20 @@ constructor(
         }
 
         /** Identifier for the last event from the previous pagination request. */
-        fun after(after: String) = apply { this.after = after }
+        fun after(after: String?) = apply { this.after = after }
+
+        /** Identifier for the last event from the previous pagination request. */
+        fun after(after: Optional<String>) = after(after.orElse(null))
 
         /** Number of events to retrieve. */
-        fun limit(limit: Long) = apply { this.limit = limit }
+        fun limit(limit: Long?) = apply { this.limit = limit }
+
+        /** Number of events to retrieve. */
+        fun limit(limit: Long) = limit(limit as Long?)
+
+        /** Number of events to retrieve. */
+        @Suppress("USELESS_CAST") // See https://youtrack.jetbrains.com/issue/KT-74228
+        fun limit(limit: Optional<Long>) = limit(limit.orElse(null) as Long?)
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()

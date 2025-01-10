@@ -18,6 +18,7 @@ import com.openai.core.BaseSerializer
 import com.openai.core.Enum
 import com.openai.core.ExcludeMissing
 import com.openai.core.JsonField
+import com.openai.core.JsonMissing
 import com.openai.core.JsonValue
 import com.openai.core.NoAutoDetect
 import com.openai.core.getOrThrow
@@ -30,6 +31,7 @@ import java.util.Objects
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
+/** Create a thread. */
 class BetaThreadCreateParams
 constructor(
     private val body: BetaThreadCreateBody,
@@ -48,7 +50,7 @@ constructor(
      * additional information about the object in a structured format. Keys can be a maximum of 64
      * characters long and values can be a maximum of 512 characters long.
      */
-    fun metadata(): Optional<JsonValue> = body.metadata()
+    fun _metadata(): JsonValue = body._metadata()
 
     /**
      * A set of resources that are made available to the assistant's tools in this thread. The
@@ -57,11 +59,24 @@ constructor(
      */
     fun toolResources(): Optional<ToolResources> = body.toolResources()
 
+    /**
+     * A list of [messages](https://platform.openai.com/docs/api-reference/messages) to start the
+     * thread with.
+     */
+    fun _messages(): JsonField<List<Message>> = body._messages()
+
+    /**
+     * A set of resources that are made available to the assistant's tools in this thread. The
+     * resources are specific to the type of tool. For example, the `code_interpreter` tool requires
+     * a list of file IDs, while the `file_search` tool requires a list of vector store IDs.
+     */
+    fun _toolResources(): JsonField<ToolResources> = body._toolResources()
+
+    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
+
     fun _additionalHeaders(): Headers = additionalHeaders
 
     fun _additionalQueryParams(): QueryParams = additionalQueryParams
-
-    fun _additionalBodyProperties(): Map<String, JsonValue> = body._additionalProperties()
 
     @JvmSynthetic internal fun getBody(): BetaThreadCreateBody = body
 
@@ -73,9 +88,15 @@ constructor(
     class BetaThreadCreateBody
     @JsonCreator
     internal constructor(
-        @JsonProperty("messages") private val messages: List<Message>?,
-        @JsonProperty("metadata") private val metadata: JsonValue?,
-        @JsonProperty("tool_resources") private val toolResources: ToolResources?,
+        @JsonProperty("messages")
+        @ExcludeMissing
+        private val messages: JsonField<List<Message>> = JsonMissing.of(),
+        @JsonProperty("metadata")
+        @ExcludeMissing
+        private val metadata: JsonValue = JsonMissing.of(),
+        @JsonProperty("tool_resources")
+        @ExcludeMissing
+        private val toolResources: JsonField<ToolResources> = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
@@ -84,16 +105,32 @@ constructor(
          * A list of [messages](https://platform.openai.com/docs/api-reference/messages) to start
          * the thread with.
          */
-        @JsonProperty("messages")
-        fun messages(): Optional<List<Message>> = Optional.ofNullable(messages)
+        fun messages(): Optional<List<Message>> =
+            Optional.ofNullable(messages.getNullable("messages"))
 
         /**
          * Set of 16 key-value pairs that can be attached to an object. This can be useful for
          * storing additional information about the object in a structured format. Keys can be a
          * maximum of 64 characters long and values can be a maximum of 512 characters long.
          */
-        @JsonProperty("metadata")
-        fun metadata(): Optional<JsonValue> = Optional.ofNullable(metadata)
+        @JsonProperty("metadata") @ExcludeMissing fun _metadata(): JsonValue = metadata
+
+        /**
+         * A set of resources that are made available to the assistant's tools in this thread. The
+         * resources are specific to the type of tool. For example, the `code_interpreter` tool
+         * requires a list of file IDs, while the `file_search` tool requires a list of vector store
+         * IDs.
+         */
+        fun toolResources(): Optional<ToolResources> =
+            Optional.ofNullable(toolResources.getNullable("tool_resources"))
+
+        /**
+         * A list of [messages](https://platform.openai.com/docs/api-reference/messages) to start
+         * the thread with.
+         */
+        @JsonProperty("messages")
+        @ExcludeMissing
+        fun _messages(): JsonField<List<Message>> = messages
 
         /**
          * A set of resources that are made available to the assistant's tools in this thread. The
@@ -102,11 +139,22 @@ constructor(
          * IDs.
          */
         @JsonProperty("tool_resources")
-        fun toolResources(): Optional<ToolResources> = Optional.ofNullable(toolResources)
+        @ExcludeMissing
+        fun _toolResources(): JsonField<ToolResources> = toolResources
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): BetaThreadCreateBody = apply {
+            if (!validated) {
+                messages().map { it.forEach { it.validate() } }
+                toolResources().map { it.validate() }
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -117,14 +165,14 @@ constructor(
 
         class Builder {
 
-            private var messages: MutableList<Message>? = null
-            private var metadata: JsonValue? = null
-            private var toolResources: ToolResources? = null
+            private var messages: JsonField<MutableList<Message>>? = null
+            private var metadata: JsonValue = JsonMissing.of()
+            private var toolResources: JsonField<ToolResources> = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
             internal fun from(betaThreadCreateBody: BetaThreadCreateBody) = apply {
-                messages = betaThreadCreateBody.messages?.toMutableList()
+                messages = betaThreadCreateBody.messages.map { it.toMutableList() }
                 metadata = betaThreadCreateBody.metadata
                 toolResources = betaThreadCreateBody.toolResources
                 additionalProperties = betaThreadCreateBody.additionalProperties.toMutableMap()
@@ -134,8 +182,14 @@ constructor(
              * A list of [messages](https://platform.openai.com/docs/api-reference/messages) to
              * start the thread with.
              */
-            fun messages(messages: List<Message>) = apply {
-                this.messages = messages.toMutableList()
+            fun messages(messages: List<Message>) = messages(JsonField.of(messages))
+
+            /**
+             * A list of [messages](https://platform.openai.com/docs/api-reference/messages) to
+             * start the thread with.
+             */
+            fun messages(messages: JsonField<List<Message>>) = apply {
+                this.messages = messages.map { it.toMutableList() }
             }
 
             /**
@@ -143,7 +197,16 @@ constructor(
              * start the thread with.
              */
             fun addMessage(message: Message) = apply {
-                messages = (messages ?: mutableListOf()).apply { add(message) }
+                messages =
+                    (messages ?: JsonField.of(mutableListOf())).apply {
+                        asKnown()
+                            .orElseThrow {
+                                IllegalStateException(
+                                    "Field was set to non-list type: ${javaClass.simpleName}"
+                                )
+                            }
+                            .add(message)
+                    }
             }
 
             /**
@@ -159,7 +222,25 @@ constructor(
              * tool requires a list of file IDs, while the `file_search` tool requires a list of
              * vector store IDs.
              */
-            fun toolResources(toolResources: ToolResources) = apply {
+            fun toolResources(toolResources: ToolResources?) =
+                toolResources(JsonField.ofNullable(toolResources))
+
+            /**
+             * A set of resources that are made available to the assistant's tools in this thread.
+             * The resources are specific to the type of tool. For example, the `code_interpreter`
+             * tool requires a list of file IDs, while the `file_search` tool requires a list of
+             * vector store IDs.
+             */
+            fun toolResources(toolResources: Optional<ToolResources>) =
+                toolResources(toolResources.orElse(null))
+
+            /**
+             * A set of resources that are made available to the assistant's tools in this thread.
+             * The resources are specific to the type of tool. For example, the `code_interpreter`
+             * tool requires a list of file IDs, while the `file_search` tool requires a list of
+             * vector store IDs.
+             */
+            fun toolResources(toolResources: JsonField<ToolResources>) = apply {
                 this.toolResources = toolResources
             }
 
@@ -184,7 +265,7 @@ constructor(
 
             fun build(): BetaThreadCreateBody =
                 BetaThreadCreateBody(
-                    messages?.toImmutable(),
+                    (messages ?: JsonMissing.of()).map { it.toImmutable() },
                     metadata,
                     toolResources,
                     additionalProperties.toImmutable(),
@@ -240,6 +321,12 @@ constructor(
          * A list of [messages](https://platform.openai.com/docs/api-reference/messages) to start
          * the thread with.
          */
+        fun messages(messages: JsonField<List<Message>>) = apply { body.messages(messages) }
+
+        /**
+         * A list of [messages](https://platform.openai.com/docs/api-reference/messages) to start
+         * the thread with.
+         */
         fun addMessage(message: Message) = apply { body.addMessage(message) }
 
         /**
@@ -255,8 +342,46 @@ constructor(
          * requires a list of file IDs, while the `file_search` tool requires a list of vector store
          * IDs.
          */
-        fun toolResources(toolResources: ToolResources) = apply {
+        fun toolResources(toolResources: ToolResources?) = apply {
             body.toolResources(toolResources)
+        }
+
+        /**
+         * A set of resources that are made available to the assistant's tools in this thread. The
+         * resources are specific to the type of tool. For example, the `code_interpreter` tool
+         * requires a list of file IDs, while the `file_search` tool requires a list of vector store
+         * IDs.
+         */
+        fun toolResources(toolResources: Optional<ToolResources>) =
+            toolResources(toolResources.orElse(null))
+
+        /**
+         * A set of resources that are made available to the assistant's tools in this thread. The
+         * resources are specific to the type of tool. For example, the `code_interpreter` tool
+         * requires a list of file IDs, while the `file_search` tool requires a list of vector store
+         * IDs.
+         */
+        fun toolResources(toolResources: JsonField<ToolResources>) = apply {
+            body.toolResources(toolResources)
+        }
+
+        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
+            body.additionalProperties(additionalBodyProperties)
+        }
+
+        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
+            body.putAdditionalProperty(key, value)
+        }
+
+        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
+            apply {
+                body.putAllAdditionalProperties(additionalBodyProperties)
+            }
+
+        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
+
+        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
+            body.removeAllAdditionalProperties(keys)
         }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
@@ -357,25 +482,6 @@ constructor(
             additionalQueryParams.removeAll(keys)
         }
 
-        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
-            body.additionalProperties(additionalBodyProperties)
-        }
-
-        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
-            body.putAdditionalProperty(key, value)
-        }
-
-        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
-            apply {
-                body.putAllAdditionalProperties(additionalBodyProperties)
-            }
-
-        fun removeAdditionalBodyProperty(key: String) = apply { body.removeAdditionalProperty(key) }
-
-        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
-            body.removeAllAdditionalProperties(keys)
-        }
-
         fun build(): BetaThreadCreateParams =
             BetaThreadCreateParams(
                 body.build(),
@@ -388,16 +494,22 @@ constructor(
     class Message
     @JsonCreator
     private constructor(
-        @JsonProperty("content") private val content: Content,
-        @JsonProperty("role") private val role: Role,
-        @JsonProperty("attachments") private val attachments: List<Attachment>?,
-        @JsonProperty("metadata") private val metadata: JsonValue?,
+        @JsonProperty("content")
+        @ExcludeMissing
+        private val content: JsonField<Content> = JsonMissing.of(),
+        @JsonProperty("role") @ExcludeMissing private val role: JsonField<Role> = JsonMissing.of(),
+        @JsonProperty("attachments")
+        @ExcludeMissing
+        private val attachments: JsonField<List<Attachment>> = JsonMissing.of(),
+        @JsonProperty("metadata")
+        @ExcludeMissing
+        private val metadata: JsonValue = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
 
         /** The text contents of the message. */
-        @JsonProperty("content") fun content(): Content = content
+        fun content(): Content = content.getRequired("content")
 
         /**
          * The role of the entity that is creating the message. Allowed values include:
@@ -406,23 +518,50 @@ constructor(
          * - `assistant`: Indicates the message is generated by the assistant. Use this value to
          *   insert messages from the assistant into the conversation.
          */
-        @JsonProperty("role") fun role(): Role = role
+        fun role(): Role = role.getRequired("role")
 
         /** A list of files attached to the message, and the tools they should be added to. */
-        @JsonProperty("attachments")
-        fun attachments(): Optional<List<Attachment>> = Optional.ofNullable(attachments)
+        fun attachments(): Optional<List<Attachment>> =
+            Optional.ofNullable(attachments.getNullable("attachments"))
 
         /**
          * Set of 16 key-value pairs that can be attached to an object. This can be useful for
          * storing additional information about the object in a structured format. Keys can be a
          * maximum of 64 characters long and values can be a maximum of 512 characters long.
          */
-        @JsonProperty("metadata")
-        fun metadata(): Optional<JsonValue> = Optional.ofNullable(metadata)
+        @JsonProperty("metadata") @ExcludeMissing fun _metadata(): JsonValue = metadata
+
+        /** The text contents of the message. */
+        @JsonProperty("content") @ExcludeMissing fun _content(): JsonField<Content> = content
+
+        /**
+         * The role of the entity that is creating the message. Allowed values include:
+         * - `user`: Indicates the message is sent by an actual user and should be used in most
+         *   cases to represent user-generated messages.
+         * - `assistant`: Indicates the message is generated by the assistant. Use this value to
+         *   insert messages from the assistant into the conversation.
+         */
+        @JsonProperty("role") @ExcludeMissing fun _role(): JsonField<Role> = role
+
+        /** A list of files attached to the message, and the tools they should be added to. */
+        @JsonProperty("attachments")
+        @ExcludeMissing
+        fun _attachments(): JsonField<List<Attachment>> = attachments
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): Message = apply {
+            if (!validated) {
+                content()
+                role()
+                attachments().map { it.forEach { it.validate() } }
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -433,28 +572,29 @@ constructor(
 
         class Builder {
 
-            private var content: Content? = null
-            private var role: Role? = null
-            private var attachments: MutableList<Attachment>? = null
-            private var metadata: JsonValue? = null
+            private var content: JsonField<Content>? = null
+            private var role: JsonField<Role>? = null
+            private var attachments: JsonField<MutableList<Attachment>>? = null
+            private var metadata: JsonValue = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
             internal fun from(message: Message) = apply {
                 content = message.content
                 role = message.role
-                attachments = message.attachments?.toMutableList()
+                attachments = message.attachments.map { it.toMutableList() }
                 metadata = message.metadata
                 additionalProperties = message.additionalProperties.toMutableMap()
             }
 
             /** The text contents of the message. */
-            fun content(content: Content) = apply { this.content = content }
+            fun content(content: Content) = content(JsonField.of(content))
 
             /** The text contents of the message. */
-            fun content(textContent: String) = apply {
-                this.content = Content.ofTextContent(textContent)
-            }
+            fun content(content: JsonField<Content>) = apply { this.content = content }
+
+            /** The text contents of the message. */
+            fun content(textContent: String) = content(Content.ofTextContent(textContent))
 
             /**
              * An array of content parts with a defined type, each can be of type `text` or images
@@ -462,9 +602,7 @@ constructor(
              * [Vision-compatible models](https://platform.openai.com/docs/models).
              */
             fun contentOfArrayOfContentParts(arrayOfContentParts: List<MessageContentPartParam>) =
-                apply {
-                    this.content = Content.ofArrayOfContentParts(arrayOfContentParts)
-                }
+                content(Content.ofArrayOfContentParts(arrayOfContentParts))
 
             /**
              * The role of the entity that is creating the message. Allowed values include:
@@ -473,16 +611,42 @@ constructor(
              * - `assistant`: Indicates the message is generated by the assistant. Use this value to
              *   insert messages from the assistant into the conversation.
              */
-            fun role(role: Role) = apply { this.role = role }
+            fun role(role: Role) = role(JsonField.of(role))
+
+            /**
+             * The role of the entity that is creating the message. Allowed values include:
+             * - `user`: Indicates the message is sent by an actual user and should be used in most
+             *   cases to represent user-generated messages.
+             * - `assistant`: Indicates the message is generated by the assistant. Use this value to
+             *   insert messages from the assistant into the conversation.
+             */
+            fun role(role: JsonField<Role>) = apply { this.role = role }
 
             /** A list of files attached to the message, and the tools they should be added to. */
-            fun attachments(attachments: List<Attachment>) = apply {
-                this.attachments = attachments.toMutableList()
+            fun attachments(attachments: List<Attachment>?) =
+                attachments(JsonField.ofNullable(attachments))
+
+            /** A list of files attached to the message, and the tools they should be added to. */
+            fun attachments(attachments: Optional<List<Attachment>>) =
+                attachments(attachments.orElse(null))
+
+            /** A list of files attached to the message, and the tools they should be added to. */
+            fun attachments(attachments: JsonField<List<Attachment>>) = apply {
+                this.attachments = attachments.map { it.toMutableList() }
             }
 
             /** A list of files attached to the message, and the tools they should be added to. */
             fun addAttachment(attachment: Attachment) = apply {
-                attachments = (attachments ?: mutableListOf()).apply { add(attachment) }
+                attachments =
+                    (attachments ?: JsonField.of(mutableListOf())).apply {
+                        asKnown()
+                            .orElseThrow {
+                                IllegalStateException(
+                                    "Field was set to non-list type: ${javaClass.simpleName}"
+                                )
+                            }
+                            .add(attachment)
+                    }
             }
 
             /**
@@ -515,7 +679,7 @@ constructor(
                 Message(
                     checkNotNull(content) { "`content` is required but was not set" },
                     checkNotNull(role) { "`role` is required but was not set" },
-                    attachments?.toImmutable(),
+                    (attachments ?: JsonMissing.of()).map { it.toImmutable() },
                     metadata,
                     additionalProperties.toImmutable(),
                 )
@@ -531,8 +695,11 @@ constructor(
             private val _json: JsonValue? = null,
         ) {
 
+            private var validated: Boolean = false
+
             /** The text contents of the message. */
             fun textContent(): Optional<String> = Optional.ofNullable(textContent)
+
             /**
              * An array of content parts with a defined type, each can be of type `text` or images
              * can be passed with `image_url` or `image_file`. Image types are only supported on
@@ -547,6 +714,7 @@ constructor(
 
             /** The text contents of the message. */
             fun asTextContent(): String = textContent.getOrThrow("textContent")
+
             /**
              * An array of content parts with a defined type, each can be of type `text` or images
              * can be passed with `image_url` or `image_file`. Image types are only supported on
@@ -563,6 +731,15 @@ constructor(
                     arrayOfContentParts != null ->
                         visitor.visitArrayOfContentParts(arrayOfContentParts)
                     else -> visitor.unknown(_json)
+                }
+            }
+
+            fun validate(): Content = apply {
+                if (!validated) {
+                    if (textContent == null && arrayOfContentParts == null) {
+                        throw OpenAIInvalidDataException("Unknown Content: $_json")
+                    }
+                    validated = true
                 }
             }
 
@@ -707,21 +884,41 @@ constructor(
         class Attachment
         @JsonCreator
         private constructor(
-            @JsonProperty("file_id") private val fileId: String?,
-            @JsonProperty("tools") private val tools: List<Tool>?,
+            @JsonProperty("file_id")
+            @ExcludeMissing
+            private val fileId: JsonField<String> = JsonMissing.of(),
+            @JsonProperty("tools")
+            @ExcludeMissing
+            private val tools: JsonField<List<Tool>> = JsonMissing.of(),
             @JsonAnySetter
             private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
 
             /** The ID of the file to attach to the message. */
-            @JsonProperty("file_id") fun fileId(): Optional<String> = Optional.ofNullable(fileId)
+            fun fileId(): Optional<String> = Optional.ofNullable(fileId.getNullable("file_id"))
 
             /** The tools to add this file to. */
-            @JsonProperty("tools") fun tools(): Optional<List<Tool>> = Optional.ofNullable(tools)
+            fun tools(): Optional<List<Tool>> = Optional.ofNullable(tools.getNullable("tools"))
+
+            /** The ID of the file to attach to the message. */
+            @JsonProperty("file_id") @ExcludeMissing fun _fileId(): JsonField<String> = fileId
+
+            /** The tools to add this file to. */
+            @JsonProperty("tools") @ExcludeMissing fun _tools(): JsonField<List<Tool>> = tools
 
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
+
+            fun validate(): Attachment = apply {
+                if (!validated) {
+                    fileId()
+                    tools()
+                    validated = true
+                }
+            }
 
             fun toBuilder() = Builder().from(this)
 
@@ -732,27 +929,51 @@ constructor(
 
             class Builder {
 
-                private var fileId: String? = null
-                private var tools: MutableList<Tool>? = null
+                private var fileId: JsonField<String> = JsonMissing.of()
+                private var tools: JsonField<MutableList<Tool>>? = null
                 private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                 @JvmSynthetic
                 internal fun from(attachment: Attachment) = apply {
                     fileId = attachment.fileId
-                    tools = attachment.tools?.toMutableList()
+                    tools = attachment.tools.map { it.toMutableList() }
                     additionalProperties = attachment.additionalProperties.toMutableMap()
                 }
 
                 /** The ID of the file to attach to the message. */
-                fun fileId(fileId: String) = apply { this.fileId = fileId }
+                fun fileId(fileId: String) = fileId(JsonField.of(fileId))
+
+                /** The ID of the file to attach to the message. */
+                fun fileId(fileId: JsonField<String>) = apply { this.fileId = fileId }
 
                 /** The tools to add this file to. */
-                fun tools(tools: List<Tool>) = apply { this.tools = tools.toMutableList() }
+                fun tools(tools: List<Tool>) = tools(JsonField.of(tools))
+
+                /** The tools to add this file to. */
+                fun tools(tools: JsonField<List<Tool>>) = apply {
+                    this.tools = tools.map { it.toMutableList() }
+                }
 
                 /** The tools to add this file to. */
                 fun addTool(tool: Tool) = apply {
-                    tools = (tools ?: mutableListOf()).apply { add(tool) }
+                    tools =
+                        (tools ?: JsonField.of(mutableListOf())).apply {
+                            asKnown()
+                                .orElseThrow {
+                                    IllegalStateException(
+                                        "Field was set to non-list type: ${javaClass.simpleName}"
+                                    )
+                                }
+                                .add(tool)
+                        }
                 }
+
+                /** The tools to add this file to. */
+                fun addTool(codeInterpreterTool: CodeInterpreterTool) =
+                    addTool(Tool.ofCodeInterpreterTool(codeInterpreterTool))
+
+                /** The tools to add this file to. */
+                fun addTool(fileSearch: Tool.FileSearch) = addTool(Tool.ofFileSearch(fileSearch))
 
                 fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                     this.additionalProperties.clear()
@@ -779,7 +1000,7 @@ constructor(
                 fun build(): Attachment =
                     Attachment(
                         fileId,
-                        tools?.toImmutable(),
+                        (tools ?: JsonMissing.of()).map { it.toImmutable() },
                         additionalProperties.toImmutable(),
                     )
             }
@@ -792,6 +1013,8 @@ constructor(
                 private val fileSearch: FileSearch? = null,
                 private val _json: JsonValue? = null,
             ) {
+
+                private var validated: Boolean = false
 
                 fun codeInterpreterTool(): Optional<CodeInterpreterTool> =
                     Optional.ofNullable(codeInterpreterTool)
@@ -815,6 +1038,17 @@ constructor(
                             visitor.visitCodeInterpreterTool(codeInterpreterTool)
                         fileSearch != null -> visitor.visitFileSearch(fileSearch)
                         else -> visitor.unknown(_json)
+                    }
+                }
+
+                fun validate(): Tool = apply {
+                    if (!validated) {
+                        if (codeInterpreterTool == null && fileSearch == null) {
+                            throw OpenAIInvalidDataException("Unknown Tool: $_json")
+                        }
+                        codeInterpreterTool?.validate()
+                        fileSearch?.validate()
+                        validated = true
                     }
                 }
 
@@ -866,14 +1100,18 @@ constructor(
 
                         when (type) {
                             "code_interpreter" -> {
-                                tryDeserialize(node, jacksonTypeRef<CodeInterpreterTool>())?.let {
-                                    return Tool(codeInterpreterTool = it, _json = json)
-                                }
+                                tryDeserialize(node, jacksonTypeRef<CodeInterpreterTool>()) {
+                                        it.validate()
+                                    }
+                                    ?.let {
+                                        return Tool(codeInterpreterTool = it, _json = json)
+                                    }
                             }
                             "file_search" -> {
-                                tryDeserialize(node, jacksonTypeRef<FileSearch>())?.let {
-                                    return Tool(fileSearch = it, _json = json)
-                                }
+                                tryDeserialize(node, jacksonTypeRef<FileSearch>()) { it.validate() }
+                                    ?.let {
+                                        return Tool(fileSearch = it, _json = json)
+                                    }
                             }
                         }
 
@@ -902,17 +1140,31 @@ constructor(
                 class FileSearch
                 @JsonCreator
                 private constructor(
-                    @JsonProperty("type") private val type: Type,
+                    @JsonProperty("type")
+                    @ExcludeMissing
+                    private val type: JsonField<Type> = JsonMissing.of(),
                     @JsonAnySetter
                     private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
                 ) {
 
                     /** The type of tool being defined: `file_search` */
-                    @JsonProperty("type") fun type(): Type = type
+                    fun type(): Type = type.getRequired("type")
+
+                    /** The type of tool being defined: `file_search` */
+                    @JsonProperty("type") @ExcludeMissing fun _type(): JsonField<Type> = type
 
                     @JsonAnyGetter
                     @ExcludeMissing
                     fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+                    private var validated: Boolean = false
+
+                    fun validate(): FileSearch = apply {
+                        if (!validated) {
+                            type()
+                            validated = true
+                        }
+                    }
 
                     fun toBuilder() = Builder().from(this)
 
@@ -923,7 +1175,7 @@ constructor(
 
                     class Builder {
 
-                        private var type: Type? = null
+                        private var type: JsonField<Type>? = null
                         private var additionalProperties: MutableMap<String, JsonValue> =
                             mutableMapOf()
 
@@ -934,7 +1186,10 @@ constructor(
                         }
 
                         /** The type of tool being defined: `file_search` */
-                        fun type(type: Type) = apply { this.type = type }
+                        fun type(type: Type) = type(JsonField.of(type))
+
+                        /** The type of tool being defined: `file_search` */
+                        fun type(type: JsonField<Type>) = apply { this.type = type }
 
                         fun additionalProperties(additionalProperties: Map<String, JsonValue>) =
                             apply {
@@ -1081,21 +1336,43 @@ constructor(
     class ToolResources
     @JsonCreator
     private constructor(
-        @JsonProperty("code_interpreter") private val codeInterpreter: CodeInterpreter?,
-        @JsonProperty("file_search") private val fileSearch: FileSearch?,
+        @JsonProperty("code_interpreter")
+        @ExcludeMissing
+        private val codeInterpreter: JsonField<CodeInterpreter> = JsonMissing.of(),
+        @JsonProperty("file_search")
+        @ExcludeMissing
+        private val fileSearch: JsonField<FileSearch> = JsonMissing.of(),
         @JsonAnySetter
         private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
     ) {
 
+        fun codeInterpreter(): Optional<CodeInterpreter> =
+            Optional.ofNullable(codeInterpreter.getNullable("code_interpreter"))
+
+        fun fileSearch(): Optional<FileSearch> =
+            Optional.ofNullable(fileSearch.getNullable("file_search"))
+
         @JsonProperty("code_interpreter")
-        fun codeInterpreter(): Optional<CodeInterpreter> = Optional.ofNullable(codeInterpreter)
+        @ExcludeMissing
+        fun _codeInterpreter(): JsonField<CodeInterpreter> = codeInterpreter
 
         @JsonProperty("file_search")
-        fun fileSearch(): Optional<FileSearch> = Optional.ofNullable(fileSearch)
+        @ExcludeMissing
+        fun _fileSearch(): JsonField<FileSearch> = fileSearch
 
         @JsonAnyGetter
         @ExcludeMissing
         fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+        private var validated: Boolean = false
+
+        fun validate(): ToolResources = apply {
+            if (!validated) {
+                codeInterpreter().map { it.validate() }
+                fileSearch().map { it.validate() }
+                validated = true
+            }
+        }
 
         fun toBuilder() = Builder().from(this)
 
@@ -1106,8 +1383,8 @@ constructor(
 
         class Builder {
 
-            private var codeInterpreter: CodeInterpreter? = null
-            private var fileSearch: FileSearch? = null
+            private var codeInterpreter: JsonField<CodeInterpreter> = JsonMissing.of()
+            private var fileSearch: JsonField<FileSearch> = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             @JvmSynthetic
@@ -1117,11 +1394,18 @@ constructor(
                 additionalProperties = toolResources.additionalProperties.toMutableMap()
             }
 
-            fun codeInterpreter(codeInterpreter: CodeInterpreter) = apply {
+            fun codeInterpreter(codeInterpreter: CodeInterpreter) =
+                codeInterpreter(JsonField.of(codeInterpreter))
+
+            fun codeInterpreter(codeInterpreter: JsonField<CodeInterpreter>) = apply {
                 this.codeInterpreter = codeInterpreter
             }
 
-            fun fileSearch(fileSearch: FileSearch) = apply { this.fileSearch = fileSearch }
+            fun fileSearch(fileSearch: FileSearch) = fileSearch(JsonField.of(fileSearch))
+
+            fun fileSearch(fileSearch: JsonField<FileSearch>) = apply {
+                this.fileSearch = fileSearch
+            }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
@@ -1154,7 +1438,9 @@ constructor(
         class CodeInterpreter
         @JsonCreator
         private constructor(
-            @JsonProperty("file_ids") private val fileIds: List<String>?,
+            @JsonProperty("file_ids")
+            @ExcludeMissing
+            private val fileIds: JsonField<List<String>> = JsonMissing.of(),
             @JsonAnySetter
             private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
@@ -1164,12 +1450,30 @@ constructor(
              * available to the `code_interpreter` tool. There can be a maximum of 20 files
              * associated with the tool.
              */
+            fun fileIds(): Optional<List<String>> =
+                Optional.ofNullable(fileIds.getNullable("file_ids"))
+
+            /**
+             * A list of [file](https://platform.openai.com/docs/api-reference/files) IDs made
+             * available to the `code_interpreter` tool. There can be a maximum of 20 files
+             * associated with the tool.
+             */
             @JsonProperty("file_ids")
-            fun fileIds(): Optional<List<String>> = Optional.ofNullable(fileIds)
+            @ExcludeMissing
+            fun _fileIds(): JsonField<List<String>> = fileIds
 
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
+
+            fun validate(): CodeInterpreter = apply {
+                if (!validated) {
+                    fileIds()
+                    validated = true
+                }
+            }
 
             fun toBuilder() = Builder().from(this)
 
@@ -1180,12 +1484,12 @@ constructor(
 
             class Builder {
 
-                private var fileIds: MutableList<String>? = null
+                private var fileIds: JsonField<MutableList<String>>? = null
                 private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                 @JvmSynthetic
                 internal fun from(codeInterpreter: CodeInterpreter) = apply {
-                    fileIds = codeInterpreter.fileIds?.toMutableList()
+                    fileIds = codeInterpreter.fileIds.map { it.toMutableList() }
                     additionalProperties = codeInterpreter.additionalProperties.toMutableMap()
                 }
 
@@ -1194,8 +1498,15 @@ constructor(
                  * available to the `code_interpreter` tool. There can be a maximum of 20 files
                  * associated with the tool.
                  */
-                fun fileIds(fileIds: List<String>) = apply {
-                    this.fileIds = fileIds.toMutableList()
+                fun fileIds(fileIds: List<String>) = fileIds(JsonField.of(fileIds))
+
+                /**
+                 * A list of [file](https://platform.openai.com/docs/api-reference/files) IDs made
+                 * available to the `code_interpreter` tool. There can be a maximum of 20 files
+                 * associated with the tool.
+                 */
+                fun fileIds(fileIds: JsonField<List<String>>) = apply {
+                    this.fileIds = fileIds.map { it.toMutableList() }
                 }
 
                 /**
@@ -1204,7 +1515,16 @@ constructor(
                  * associated with the tool.
                  */
                 fun addFileId(fileId: String) = apply {
-                    fileIds = (fileIds ?: mutableListOf()).apply { add(fileId) }
+                    fileIds =
+                        (fileIds ?: JsonField.of(mutableListOf())).apply {
+                            asKnown()
+                                .orElseThrow {
+                                    IllegalStateException(
+                                        "Field was set to non-list type: ${javaClass.simpleName}"
+                                    )
+                                }
+                                .add(fileId)
+                        }
                 }
 
                 fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
@@ -1230,7 +1550,10 @@ constructor(
                 }
 
                 fun build(): CodeInterpreter =
-                    CodeInterpreter(fileIds?.toImmutable(), additionalProperties.toImmutable())
+                    CodeInterpreter(
+                        (fileIds ?: JsonMissing.of()).map { it.toImmutable() },
+                        additionalProperties.toImmutable()
+                    )
             }
 
             override fun equals(other: Any?): Boolean {
@@ -1255,8 +1578,12 @@ constructor(
         class FileSearch
         @JsonCreator
         private constructor(
-            @JsonProperty("vector_store_ids") private val vectorStoreIds: List<String>?,
-            @JsonProperty("vector_stores") private val vectorStores: List<VectorStore>?,
+            @JsonProperty("vector_store_ids")
+            @ExcludeMissing
+            private val vectorStoreIds: JsonField<List<String>> = JsonMissing.of(),
+            @JsonProperty("vector_stores")
+            @ExcludeMissing
+            private val vectorStores: JsonField<List<VectorStore>> = JsonMissing.of(),
             @JsonAnySetter
             private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
         ) {
@@ -1267,8 +1594,27 @@ constructor(
              * attached to this thread. There can be a maximum of 1 vector store attached to the
              * thread.
              */
+            fun vectorStoreIds(): Optional<List<String>> =
+                Optional.ofNullable(vectorStoreIds.getNullable("vector_store_ids"))
+
+            /**
+             * A helper to create a
+             * [vector store](https://platform.openai.com/docs/api-reference/vector-stores/object)
+             * with file_ids and attach it to this thread. There can be a maximum of 1 vector store
+             * attached to the thread.
+             */
+            fun vectorStores(): Optional<List<VectorStore>> =
+                Optional.ofNullable(vectorStores.getNullable("vector_stores"))
+
+            /**
+             * The
+             * [vector store](https://platform.openai.com/docs/api-reference/vector-stores/object)
+             * attached to this thread. There can be a maximum of 1 vector store attached to the
+             * thread.
+             */
             @JsonProperty("vector_store_ids")
-            fun vectorStoreIds(): Optional<List<String>> = Optional.ofNullable(vectorStoreIds)
+            @ExcludeMissing
+            fun _vectorStoreIds(): JsonField<List<String>> = vectorStoreIds
 
             /**
              * A helper to create a
@@ -1277,11 +1623,22 @@ constructor(
              * attached to the thread.
              */
             @JsonProperty("vector_stores")
-            fun vectorStores(): Optional<List<VectorStore>> = Optional.ofNullable(vectorStores)
+            @ExcludeMissing
+            fun _vectorStores(): JsonField<List<VectorStore>> = vectorStores
 
             @JsonAnyGetter
             @ExcludeMissing
             fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            private var validated: Boolean = false
+
+            fun validate(): FileSearch = apply {
+                if (!validated) {
+                    vectorStoreIds()
+                    vectorStores().map { it.forEach { it.validate() } }
+                    validated = true
+                }
+            }
 
             fun toBuilder() = Builder().from(this)
 
@@ -1292,14 +1649,14 @@ constructor(
 
             class Builder {
 
-                private var vectorStoreIds: MutableList<String>? = null
-                private var vectorStores: MutableList<VectorStore>? = null
+                private var vectorStoreIds: JsonField<MutableList<String>>? = null
+                private var vectorStores: JsonField<MutableList<VectorStore>>? = null
                 private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                 @JvmSynthetic
                 internal fun from(fileSearch: FileSearch) = apply {
-                    vectorStoreIds = fileSearch.vectorStoreIds?.toMutableList()
-                    vectorStores = fileSearch.vectorStores?.toMutableList()
+                    vectorStoreIds = fileSearch.vectorStoreIds.map { it.toMutableList() }
+                    vectorStores = fileSearch.vectorStores.map { it.toMutableList() }
                     additionalProperties = fileSearch.additionalProperties.toMutableMap()
                 }
 
@@ -1309,8 +1666,17 @@ constructor(
                  * attached to this thread. There can be a maximum of 1 vector store attached to the
                  * thread.
                  */
-                fun vectorStoreIds(vectorStoreIds: List<String>) = apply {
-                    this.vectorStoreIds = vectorStoreIds.toMutableList()
+                fun vectorStoreIds(vectorStoreIds: List<String>) =
+                    vectorStoreIds(JsonField.of(vectorStoreIds))
+
+                /**
+                 * The
+                 * [vector store](https://platform.openai.com/docs/api-reference/vector-stores/object)
+                 * attached to this thread. There can be a maximum of 1 vector store attached to the
+                 * thread.
+                 */
+                fun vectorStoreIds(vectorStoreIds: JsonField<List<String>>) = apply {
+                    this.vectorStoreIds = vectorStoreIds.map { it.toMutableList() }
                 }
 
                 /**
@@ -1321,7 +1687,15 @@ constructor(
                  */
                 fun addVectorStoreId(vectorStoreId: String) = apply {
                     vectorStoreIds =
-                        (vectorStoreIds ?: mutableListOf()).apply { add(vectorStoreId) }
+                        (vectorStoreIds ?: JsonField.of(mutableListOf())).apply {
+                            asKnown()
+                                .orElseThrow {
+                                    IllegalStateException(
+                                        "Field was set to non-list type: ${javaClass.simpleName}"
+                                    )
+                                }
+                                .add(vectorStoreId)
+                        }
                 }
 
                 /**
@@ -1330,8 +1704,17 @@ constructor(
                  * with file_ids and attach it to this thread. There can be a maximum of 1 vector
                  * store attached to the thread.
                  */
-                fun vectorStores(vectorStores: List<VectorStore>) = apply {
-                    this.vectorStores = vectorStores.toMutableList()
+                fun vectorStores(vectorStores: List<VectorStore>) =
+                    vectorStores(JsonField.of(vectorStores))
+
+                /**
+                 * A helper to create a
+                 * [vector store](https://platform.openai.com/docs/api-reference/vector-stores/object)
+                 * with file_ids and attach it to this thread. There can be a maximum of 1 vector
+                 * store attached to the thread.
+                 */
+                fun vectorStores(vectorStores: JsonField<List<VectorStore>>) = apply {
+                    this.vectorStores = vectorStores.map { it.toMutableList() }
                 }
 
                 /**
@@ -1341,7 +1724,16 @@ constructor(
                  * store attached to the thread.
                  */
                 fun addVectorStore(vectorStore: VectorStore) = apply {
-                    vectorStores = (vectorStores ?: mutableListOf()).apply { add(vectorStore) }
+                    vectorStores =
+                        (vectorStores ?: JsonField.of(mutableListOf())).apply {
+                            asKnown()
+                                .orElseThrow {
+                                    IllegalStateException(
+                                        "Field was set to non-list type: ${javaClass.simpleName}"
+                                    )
+                                }
+                                .add(vectorStore)
+                        }
                 }
 
                 fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
@@ -1368,8 +1760,8 @@ constructor(
 
                 fun build(): FileSearch =
                     FileSearch(
-                        vectorStoreIds?.toImmutable(),
-                        vectorStores?.toImmutable(),
+                        (vectorStoreIds ?: JsonMissing.of()).map { it.toImmutable() },
+                        (vectorStores ?: JsonMissing.of()).map { it.toImmutable() },
                         additionalProperties.toImmutable(),
                     )
             }
@@ -1379,9 +1771,15 @@ constructor(
             @JsonCreator
             private constructor(
                 @JsonProperty("chunking_strategy")
-                private val chunkingStrategy: FileChunkingStrategyParam?,
-                @JsonProperty("file_ids") private val fileIds: List<String>?,
-                @JsonProperty("metadata") private val metadata: JsonValue?,
+                @ExcludeMissing
+                private val chunkingStrategy: JsonField<FileChunkingStrategyParam> =
+                    JsonMissing.of(),
+                @JsonProperty("file_ids")
+                @ExcludeMissing
+                private val fileIds: JsonField<List<String>> = JsonMissing.of(),
+                @JsonProperty("metadata")
+                @ExcludeMissing
+                private val metadata: JsonValue = JsonMissing.of(),
                 @JsonAnySetter
                 private val additionalProperties: Map<String, JsonValue> = immutableEmptyMap(),
             ) {
@@ -1390,16 +1788,15 @@ constructor(
                  * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
                  * strategy. Only applicable if `file_ids` is non-empty.
                  */
-                @JsonProperty("chunking_strategy")
                 fun chunkingStrategy(): Optional<FileChunkingStrategyParam> =
-                    Optional.ofNullable(chunkingStrategy)
+                    Optional.ofNullable(chunkingStrategy.getNullable("chunking_strategy"))
 
                 /**
                  * A list of [file](https://platform.openai.com/docs/api-reference/files) IDs to add
                  * to the vector store. There can be a maximum of 10000 files in a vector store.
                  */
-                @JsonProperty("file_ids")
-                fun fileIds(): Optional<List<String>> = Optional.ofNullable(fileIds)
+                fun fileIds(): Optional<List<String>> =
+                    Optional.ofNullable(fileIds.getNullable("file_ids"))
 
                 /**
                  * Set of 16 key-value pairs that can be attached to a vector store. This can be
@@ -1407,12 +1804,37 @@ constructor(
                  * format. Keys can be a maximum of 64 characters long and values can be a maximum
                  * of 512 characters long.
                  */
-                @JsonProperty("metadata")
-                fun metadata(): Optional<JsonValue> = Optional.ofNullable(metadata)
+                @JsonProperty("metadata") @ExcludeMissing fun _metadata(): JsonValue = metadata
+
+                /**
+                 * The chunking strategy used to chunk the file(s). If not set, will use the `auto`
+                 * strategy. Only applicable if `file_ids` is non-empty.
+                 */
+                @JsonProperty("chunking_strategy")
+                @ExcludeMissing
+                fun _chunkingStrategy(): JsonField<FileChunkingStrategyParam> = chunkingStrategy
+
+                /**
+                 * A list of [file](https://platform.openai.com/docs/api-reference/files) IDs to add
+                 * to the vector store. There can be a maximum of 10000 files in a vector store.
+                 */
+                @JsonProperty("file_ids")
+                @ExcludeMissing
+                fun _fileIds(): JsonField<List<String>> = fileIds
 
                 @JsonAnyGetter
                 @ExcludeMissing
                 fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+                private var validated: Boolean = false
+
+                fun validate(): VectorStore = apply {
+                    if (!validated) {
+                        chunkingStrategy()
+                        fileIds()
+                        validated = true
+                    }
+                }
 
                 fun toBuilder() = Builder().from(this)
 
@@ -1423,15 +1845,16 @@ constructor(
 
                 class Builder {
 
-                    private var chunkingStrategy: FileChunkingStrategyParam? = null
-                    private var fileIds: MutableList<String>? = null
-                    private var metadata: JsonValue? = null
+                    private var chunkingStrategy: JsonField<FileChunkingStrategyParam> =
+                        JsonMissing.of()
+                    private var fileIds: JsonField<MutableList<String>>? = null
+                    private var metadata: JsonValue = JsonMissing.of()
                     private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
                     @JvmSynthetic
                     internal fun from(vectorStore: VectorStore) = apply {
                         chunkingStrategy = vectorStore.chunkingStrategy
-                        fileIds = vectorStore.fileIds?.toMutableList()
+                        fileIds = vectorStore.fileIds.map { it.toMutableList() }
                         metadata = vectorStore.metadata
                         additionalProperties = vectorStore.additionalProperties.toMutableMap()
                     }
@@ -1440,9 +1863,17 @@ constructor(
                      * The chunking strategy used to chunk the file(s). If not set, will use the
                      * `auto` strategy. Only applicable if `file_ids` is non-empty.
                      */
-                    fun chunkingStrategy(chunkingStrategy: FileChunkingStrategyParam) = apply {
-                        this.chunkingStrategy = chunkingStrategy
-                    }
+                    fun chunkingStrategy(chunkingStrategy: FileChunkingStrategyParam) =
+                        chunkingStrategy(JsonField.of(chunkingStrategy))
+
+                    /**
+                     * The chunking strategy used to chunk the file(s). If not set, will use the
+                     * `auto` strategy. Only applicable if `file_ids` is non-empty.
+                     */
+                    fun chunkingStrategy(chunkingStrategy: JsonField<FileChunkingStrategyParam>) =
+                        apply {
+                            this.chunkingStrategy = chunkingStrategy
+                        }
 
                     /**
                      * The default strategy. This strategy currently uses a `max_chunk_size_tokens`
@@ -1450,29 +1881,40 @@ constructor(
                      */
                     fun chunkingStrategy(
                         autoFileChunkingStrategyParam: AutoFileChunkingStrategyParam
-                    ) = apply {
-                        this.chunkingStrategy =
+                    ) =
+                        chunkingStrategy(
                             FileChunkingStrategyParam.ofAutoFileChunkingStrategyParam(
                                 autoFileChunkingStrategyParam
                             )
-                    }
+                        )
 
+                    /**
+                     * The chunking strategy used to chunk the file(s). If not set, will use the
+                     * `auto` strategy. Only applicable if `file_ids` is non-empty.
+                     */
                     fun chunkingStrategy(
                         staticFileChunkingStrategyParam: StaticFileChunkingStrategyParam
-                    ) = apply {
-                        this.chunkingStrategy =
+                    ) =
+                        chunkingStrategy(
                             FileChunkingStrategyParam.ofStaticFileChunkingStrategyParam(
                                 staticFileChunkingStrategyParam
                             )
-                    }
+                        )
 
                     /**
                      * A list of [file](https://platform.openai.com/docs/api-reference/files) IDs to
                      * add to the vector store. There can be a maximum of 10000 files in a vector
                      * store.
                      */
-                    fun fileIds(fileIds: List<String>) = apply {
-                        this.fileIds = fileIds.toMutableList()
+                    fun fileIds(fileIds: List<String>) = fileIds(JsonField.of(fileIds))
+
+                    /**
+                     * A list of [file](https://platform.openai.com/docs/api-reference/files) IDs to
+                     * add to the vector store. There can be a maximum of 10000 files in a vector
+                     * store.
+                     */
+                    fun fileIds(fileIds: JsonField<List<String>>) = apply {
+                        this.fileIds = fileIds.map { it.toMutableList() }
                     }
 
                     /**
@@ -1481,7 +1923,16 @@ constructor(
                      * store.
                      */
                     fun addFileId(fileId: String) = apply {
-                        fileIds = (fileIds ?: mutableListOf()).apply { add(fileId) }
+                        fileIds =
+                            (fileIds ?: JsonField.of(mutableListOf())).apply {
+                                asKnown()
+                                    .orElseThrow {
+                                        IllegalStateException(
+                                            "Field was set to non-list type: ${javaClass.simpleName}"
+                                        )
+                                    }
+                                    .add(fileId)
+                            }
                     }
 
                     /**
@@ -1517,7 +1968,7 @@ constructor(
                     fun build(): VectorStore =
                         VectorStore(
                             chunkingStrategy,
-                            fileIds?.toImmutable(),
+                            (fileIds ?: JsonMissing.of()).map { it.toImmutable() },
                             metadata,
                             additionalProperties.toImmutable(),
                         )

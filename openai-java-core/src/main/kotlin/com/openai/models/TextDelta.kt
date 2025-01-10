@@ -33,10 +33,12 @@ private constructor(
     /** The data that makes up the text. */
     fun value(): Optional<String> = Optional.ofNullable(value.getNullable("value"))
 
-    @JsonProperty("annotations") @ExcludeMissing fun _annotations() = annotations
+    @JsonProperty("annotations")
+    @ExcludeMissing
+    fun _annotations(): JsonField<List<AnnotationDelta>> = annotations
 
     /** The data that makes up the text. */
-    @JsonProperty("value") @ExcludeMissing fun _value() = value
+    @JsonProperty("value") @ExcludeMissing fun _value(): JsonField<String> = value
 
     @JsonAnyGetter
     @ExcludeMissing
@@ -61,13 +63,13 @@ private constructor(
 
     class Builder {
 
-        private var annotations: JsonField<List<AnnotationDelta>> = JsonMissing.of()
+        private var annotations: JsonField<MutableList<AnnotationDelta>>? = null
         private var value: JsonField<String> = JsonMissing.of()
         private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
         @JvmSynthetic
         internal fun from(textDelta: TextDelta) = apply {
-            annotations = textDelta.annotations
+            annotations = textDelta.annotations.map { it.toMutableList() }
             value = textDelta.value
             additionalProperties = textDelta.additionalProperties.toMutableMap()
         }
@@ -75,8 +77,38 @@ private constructor(
         fun annotations(annotations: List<AnnotationDelta>) = annotations(JsonField.of(annotations))
 
         fun annotations(annotations: JsonField<List<AnnotationDelta>>) = apply {
-            this.annotations = annotations
+            this.annotations = annotations.map { it.toMutableList() }
         }
+
+        fun addAnnotation(annotation: AnnotationDelta) = apply {
+            annotations =
+                (annotations ?: JsonField.of(mutableListOf())).apply {
+                    asKnown()
+                        .orElseThrow {
+                            IllegalStateException(
+                                "Field was set to non-list type: ${javaClass.simpleName}"
+                            )
+                        }
+                        .add(annotation)
+                }
+        }
+
+        /**
+         * A citation within the message that points to a specific quote from a specific File
+         * associated with the assistant or the message. Generated when the assistant uses the
+         * "file_search" tool to search files.
+         */
+        fun addAnnotation(fileCitationDeltaAnnotation: FileCitationDeltaAnnotation) =
+            addAnnotation(
+                AnnotationDelta.ofFileCitationDeltaAnnotation(fileCitationDeltaAnnotation)
+            )
+
+        /**
+         * A URL for the file that's generated when the assistant used the `code_interpreter` tool
+         * to generate a file.
+         */
+        fun addAnnotation(filePathDeltaAnnotation: FilePathDeltaAnnotation) =
+            addAnnotation(AnnotationDelta.ofFilePathDeltaAnnotation(filePathDeltaAnnotation))
 
         /** The data that makes up the text. */
         fun value(value: String) = value(JsonField.of(value))
@@ -105,7 +137,7 @@ private constructor(
 
         fun build(): TextDelta =
             TextDelta(
-                annotations.map { it.toImmutable() },
+                (annotations ?: JsonMissing.of()).map { it.toImmutable() },
                 value,
                 additionalProperties.toImmutable(),
             )
