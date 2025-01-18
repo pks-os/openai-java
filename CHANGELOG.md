@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.11.8 (2025-01-17)
+
+Full Changelog: [v0.11.7...v0.11.8](https://github.com/openai/openai-java/compare/v0.11.7...v0.11.8)
+
+### Documentation
+
+* fix javadoc.io link ([ba07770](https://github.com/openai/openai-java/commit/ba07770369a44a7487a7a7fae9e85da6600204ce))
+* fix javadoc.io link again ([0d2b8ce](https://github.com/openai/openai-java/commit/0d2b8ce0894ae592047e6014ff82876060152ee7))
+
+## 0.11.7 (2025-01-17)
+
+Full Changelog: [v0.11.6...v0.11.7](https://github.com/openai/openai-java/compare/v0.11.6...v0.11.7)
+
+### Chores
+
+* **internal:** upgrade kotlin compiler and gradle ([#132](https://github.com/openai/openai-java/issues/132)) ([61a0b0d](https://github.com/openai/openai-java/commit/61a0b0debfd50646fc9fe310b5decc2e891f48d0))
+
+
+### Documentation
+
+* add javadoc.io badge ([#135](https://github.com/openai/openai-java/issues/135)) ([e905ce5](https://github.com/openai/openai-java/commit/e905ce509aabe1b9db9519b6ff77a79fc95434e1))
+* add more documentation ([#134](https://github.com/openai/openai-java/issues/134)) ([893eafc](https://github.com/openai/openai-java/commit/893eafcb367b4ea96331c6deccb71c865eb67d4b))
+
+## 0.11.6 (2025-01-17)
+
+Full Changelog: [v0.11.5...v0.11.6](https://github.com/openai/openai-java/compare/v0.11.5...v0.11.6)
+
+### Chores
+
+* **internal:** move `StreamResponse` method ([#131](https://github.com/openai/openai-java/issues/131)) ([5888e39](https://github.com/openai/openai-java/commit/5888e398597b68a520b4bb3953d96403023331fd))
+* **internal:** refactor streaming implementation ([#129](https://github.com/openai/openai-java/issues/129)) ([d2831ec](https://github.com/openai/openai-java/commit/d2831ec587d37a2c2d51332f5f2f62ba3dd1181d))
+
 ## 0.11.5 (2025-01-16)
 
 Full Changelog: [v0.11.4...v0.11.5](https://github.com/openai/openai-java/compare/v0.11.4...v0.11.5)
