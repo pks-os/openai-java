@@ -7,6 +7,7 @@ import com.openai.core.RequestOptions
 import com.openai.core.handlers.errorHandler
 import com.openai.core.handlers.jsonHandler
 import com.openai.core.handlers.withErrorHandler
+import com.openai.core.http.Headers
 import com.openai.core.http.HttpMethod
 import com.openai.core.http.HttpRequest
 import com.openai.core.http.HttpResponse.Handler
@@ -17,9 +18,14 @@ import com.openai.models.BetaThreadRunStepRetrieveParams
 import com.openai.models.RunStep
 
 class StepServiceImpl
-constructor(
+internal constructor(
     private val clientOptions: ClientOptions,
 ) : StepService {
+
+    companion object {
+
+        private val DEFAULT_HEADERS = Headers.builder().put("OpenAI-Beta", "assistants=v2").build()
+    }
 
     private val errorHandler: Handler<OpenAIError> = errorHandler(clientOptions.jsonMapper)
 
@@ -45,6 +51,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .build()
         return clientOptions.httpClient.execute(request, requestOptions).let { response ->
@@ -80,6 +87,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .build()
         return clientOptions.httpClient.execute(request, requestOptions).let { response ->

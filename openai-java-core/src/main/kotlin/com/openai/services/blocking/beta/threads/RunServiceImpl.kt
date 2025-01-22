@@ -10,6 +10,7 @@ import com.openai.core.handlers.jsonHandler
 import com.openai.core.handlers.mapJson
 import com.openai.core.handlers.sseHandler
 import com.openai.core.handlers.withErrorHandler
+import com.openai.core.http.Headers
 import com.openai.core.http.HttpMethod
 import com.openai.core.http.HttpRequest
 import com.openai.core.http.HttpResponse.Handler
@@ -30,9 +31,14 @@ import com.openai.services.blocking.beta.threads.runs.StepService
 import com.openai.services.blocking.beta.threads.runs.StepServiceImpl
 
 class RunServiceImpl
-constructor(
+internal constructor(
     private val clientOptions: ClientOptions,
 ) : RunService {
+
+    companion object {
+
+        private val DEFAULT_HEADERS = Headers.builder().put("OpenAI-Beta", "assistants=v2").build()
+    }
 
     private val errorHandler: Handler<OpenAIError> = errorHandler(clientOptions.jsonMapper)
 
@@ -52,6 +58,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .body(json(clientOptions.jsonMapper, params.getBody()))
                 .build()
@@ -68,7 +75,7 @@ constructor(
 
     private val createStreamingHandler: Handler<StreamResponse<AssistantStreamEvent>> =
         sseHandler(clientOptions.jsonMapper)
-            .mapJson<AssistantStreamEvent>()
+            .mapJson<AssistantStreamEvent>(includeEventAndData = true)
             .withErrorHandler(errorHandler)
 
     /** Create a run. */
@@ -83,6 +90,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .body(
                     json(
@@ -123,6 +131,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .build()
         return clientOptions.httpClient.execute(request, requestOptions).let { response ->
@@ -148,6 +157,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .body(json(clientOptions.jsonMapper, params.getBody()))
                 .build()
@@ -178,6 +188,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .build()
         return clientOptions.httpClient.execute(request, requestOptions).let { response ->
@@ -210,6 +221,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .apply { params.getBody().ifPresent { body(json(clientOptions.jsonMapper, it)) } }
                 .build()
@@ -249,6 +261,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .body(json(clientOptions.jsonMapper, params.getBody()))
                 .build()
@@ -265,7 +278,7 @@ constructor(
 
     private val submitToolOutputsStreamingHandler: Handler<StreamResponse<AssistantStreamEvent>> =
         sseHandler(clientOptions.jsonMapper)
-            .mapJson<AssistantStreamEvent>()
+            .mapJson<AssistantStreamEvent>(includeEventAndData = true)
             .withErrorHandler(errorHandler)
 
     /**
@@ -290,6 +303,7 @@ constructor(
                 .putAllQueryParams(clientOptions.queryParams)
                 .replaceAllQueryParams(params.getQueryParams())
                 .putAllHeaders(clientOptions.headers)
+                .replaceAllHeaders(DEFAULT_HEADERS)
                 .replaceAllHeaders(params.getHeaders())
                 .body(
                     json(

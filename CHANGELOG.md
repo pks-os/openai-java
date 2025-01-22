@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.12.0 (2025-01-22)
+
+Full Changelog: [v0.11.10...v0.12.0](https://github.com/openai/openai-java/compare/v0.11.10...v0.12.0)
+
+### Features
+
+* **client:** make it easy to roundtrip messages ([#148](https://github.com/openai/openai-java/issues/148)) ([f4a1617](https://github.com/openai/openai-java/commit/f4a1617148ffc276a324ed9a59654091f57222d2))
+
+
+### Bug Fixes
+
+* **client:** bad assistants v2 deserialization ([#146](https://github.com/openai/openai-java/issues/146)) ([59d6de8](https://github.com/openai/openai-java/commit/59d6de8cf5857a4b46eeece4f3c8d930d67103d6))
+
+## 0.11.10 (2025-01-21)
+
+Full Changelog: [v0.11.9...v0.11.10](https://github.com/openai/openai-java/compare/v0.11.9...v0.11.10)
+
+### Bug Fixes
+
+* **client:** add missing default headers ([#145](https://github.com/openai/openai-java/issues/145)) ([18d5270](https://github.com/openai/openai-java/commit/18d5270326561ca8e5f10b5a671da1d30ced5993))
+
+## 0.11.9 (2025-01-21)
+
+Full Changelog: [v0.11.8...v0.11.9](https://github.com/openai/openai-java/compare/v0.11.8...v0.11.9)
+
+### Bug Fixes
+
+* **client:** make service impl constructors internal ([#141](https://github.com/openai/openai-java/issues/141)) ([da35557](https://github.com/openai/openai-java/commit/da35557895e233dd5e490e139043faad92173782))
+
 ## 0.11.8 (2025-01-17)
 
 Full Changelog: [v0.11.7...v0.11.8](https://github.com/openai/openai-java/compare/v0.11.7...v0.11.8)
